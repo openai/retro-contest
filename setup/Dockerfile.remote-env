@@ -1,27 +1,7 @@
-FROM ubuntu:xenial
+FROM remote-env:bare
 
-# Set up dependency layers
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        python3-venv libpython3-dev cmake libzip-dev build-essential && \
-    apt-get clean
-
-SHELL ["/bin/bash", "-c"]
-RUN python3 -m venv ~/venv && \
-    . ~/venv/bin/activate && \
-    pip install wheel && \
-    rm -r ~/.cache
-
-# Set up competition-specific layers
-COPY gym-retro /tmp/gym-retro
-COPY gym-remote /tmp/gym-remote
+# Set up ROMs
+COPY roms /root/roms
 RUN . ~/venv/bin/activate && \
-    pip install /tmp/gym-retro /tmp/gym-remote && \
-    rm -r ~/.cache
-
-RUN echo remote-env > /root/hostname
-RUN mkdir -p /root/compo/tmp
-COPY bash_profile /root/.bash_profile
-VOLUME /root/compo/tmp
-WORKDIR /root/compo
-ENTRYPOINT bash -l
+    python /tmp/gym-retro/scripts/import.py /root/roms && \
+    rm -r /root/roms

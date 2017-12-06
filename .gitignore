@@ -1,3 +1,7 @@
 __cache__
 .cache
 *.pyc
+roms/*.smd
+roms/*.SGD
+roms/*.bin
+roms/*.68K
