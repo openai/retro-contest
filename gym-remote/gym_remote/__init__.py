@@ -1,3 +1,4 @@
+import gym
 import gym.spaces
 import json
 import numpy as np
@@ -146,6 +147,8 @@ class NpChannel(Channel):
 
 
 class Bridge:
+    timeout = socket.timeout
+
     def __init__(self, base):
         self.base = base
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -179,9 +182,13 @@ class Bridge:
             channel.annotate('n', space.n)
             channel.annotate('type', 'Discrete')
         elif isinstance(space, gym.spaces.MultiDiscrete):
-            channel = NpChannel((space.shape,), np.int64)
+            if gym.version >= '0.9.5':
+                channel = NpChannel(space.shape, np.int64)
+                channel.annotate('shape', space.shape[0])
+            else:
+                channel = NpChannel((space.shape,), np.int64)
+                channel.annotate('shape', space.shape)
             channel.annotate('type', 'MultiDiscrete')
-            channel.annotate('shape', space.shape)
         elif isinstance(space, gym.spaces.Box):
             channel = NpChannel(space.shape, np.uint8)
             channel.annotate('type', 'Box')
@@ -239,6 +246,8 @@ class Bridge:
 
     def _recv_message(self):
         message = self.connection.recv(4096)
+        if not message:
+            return None
         return json.loads(message.decode('utf8'))
 
     def update_vars(self, vars):
@@ -254,9 +263,17 @@ class Bridge:
 
     def recv(self):
         message = self._recv_message()
+        if not message:
+            return False
         self._message_handlers[message['type']](message['content'])
+        return True
 
     def close(self):
         if self.connection and self.connection != self.sock:
             self.connection.close()
         self.sock.close()
+
+    def settimeout(self, timeout):
+        self.sock.settimeout(timeout)
+        if self.connection:
+            self.connection.settimeout(timeout)
