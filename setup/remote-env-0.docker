@@ -15,6 +15,7 @@ RUN python3 -m venv ~/venv && \
 # Set up competition-specific layers
 COPY gym-retro /tmp/gym-retro
 COPY gym-remote /tmp/gym-remote
+RUN rm -rf /tmp/gym-retro/.git
 RUN . ~/venv/bin/activate && \
     pip install /tmp/gym-retro /tmp/gym-remote && \
     rm -r ~/.cache
