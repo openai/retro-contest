@@ -1,0 +1,4 @@
+mkdir -p $HOME/compo/tmp/sock
+HOSTNAME=$(cat $HOME/hostname)
+source $HOME/venv/bin/activate
+PS1="\u@$HOSTNAME:\W# "

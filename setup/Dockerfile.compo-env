@@ -1,0 +1,27 @@
+FROM nvidia/cuda:8.0-cudnn6-runtime-ubuntu16.04
+
+# Set up dependency layers
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        python3-venv build-essential && \
+    apt-get clean
+
+SHELL ["/bin/bash", "-c"]
+RUN python3 -m venv ~/venv && \
+    . ~/venv/bin/activate && \
+    pip install wheel && \
+    pip install tensorflow-gpu==1.4 && \
+    rm -r ~/.cache
+
+# Set up competition-specific layers
+COPY gym-remote /tmp/gym-remote
+RUN . ~/venv/bin/activate && \
+    pip install /tmp/gym-remote && \
+    rm -r ~/.cache
+
+RUN echo compo-env > /root/hostname
+RUN mkdir -p /root/compo/tmp
+COPY bash_profile /root/.bash_profile
+VOLUME /root/compo/tmp
+WORKDIR /root/compo
+ENTRYPOINT bash -l
