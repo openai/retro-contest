@@ -19,7 +19,7 @@ RUN . ~/venv/bin/activate && \
     pip install /tmp/gym-remote && \
     rm -r ~/.cache
 
-RUN echo compo-env > /root/hostname
+RUN echo compo-agent > /root/hostname
 RUN mkdir -p /root/compo/tmp
 COPY setup/bash_profile /root/.bash_profile
 VOLUME /root/compo/tmp
