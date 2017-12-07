@@ -1,4 +1,5 @@
 import gym_remote as gr
+import os
 
 from . import tempdir
 
@@ -198,3 +199,135 @@ def test_bridge_multi(tempdir):
     assert server._channels['bool'].value == False
     assert client._channels['bool'].value == False
 
+
+def test_bridge_clean(tempdir):
+    import numpy as np
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+    assert list(server._channels.keys()) == ['np']
+    assert list(client._channels.keys()) == ['np']
+
+    assert os.path.exists(os.path.join(tempdir, 'sock'))
+    assert os.path.exists(os.path.join(tempdir, 'np'))
+
+    client.close()
+    server.close()
+
+    assert not os.path.exists(os.path.join(tempdir, 'sock'))
+    assert not os.path.exists(os.path.join(tempdir, 'np'))
+
+
+def test_bridge_client_clean(tempdir):
+    import numpy as np
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+    assert list(server._channels.keys()) == ['np']
+    assert list(client._channels.keys()) == ['np']
+
+    assert os.path.exists(os.path.join(tempdir, 'sock'))
+    assert os.path.exists(os.path.join(tempdir, 'np'))
+
+    client.close()
+    try:
+        server.recv()
+    except gr.Bridge.Closed:
+        pass
+
+    assert not os.path.exists(os.path.join(tempdir, 'sock'))
+    assert not os.path.exists(os.path.join(tempdir, 'np'))
+
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+
+def test_bridge_client_buffered_clean(tempdir):
+    import numpy as np
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+    assert list(server._channels.keys()) == ['np']
+    assert list(client._channels.keys()) == ['np']
+
+    assert os.path.exists(os.path.join(tempdir, 'sock'))
+    assert os.path.exists(os.path.join(tempdir, 'np'))
+
+    client.close()
+    try:
+        server.send()
+        server.recv()
+    except gr.Bridge.Closed:
+        pass
+
+    assert not os.path.exists(os.path.join(tempdir, 'sock'))
+    assert not os.path.exists(os.path.join(tempdir, 'np'))
+
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+def test_bridge_server_clean(tempdir):
+    import numpy as np
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+    assert list(server._channels.keys()) == ['np']
+    assert list(client._channels.keys()) == ['np']
+
+    assert os.path.exists(os.path.join(tempdir, 'sock'))
+    assert os.path.exists(os.path.join(tempdir, 'np'))
+
+    server.close()
+    try:
+        client.recv()
+    except gr.Bridge.Closed:
+        pass
+
+    assert not os.path.exists(os.path.join(tempdir, 'sock'))
+    assert not os.path.exists(os.path.join(tempdir, 'np'))
+
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+
+def test_bridge_server_buffered_clean(tempdir):
+    import numpy as np
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)
+
+    assert list(server._channels.keys()) == ['np']
+    assert list(client._channels.keys()) == ['np']
+
+    assert os.path.exists(os.path.join(tempdir, 'sock'))
+    assert os.path.exists(os.path.join(tempdir, 'np'))
+
+    server.close()
+    try:
+        client.send()
+        client.recv()
+    except gr.Bridge.Closed:
+        pass
+
+    assert not os.path.exists(os.path.join(tempdir, 'sock'))
+    assert not os.path.exists(os.path.join(tempdir, 'np'))
+
+    client, server = setup_client_server(tempdir)
+    server.add_channel('np', gr.NpChannel((2, 2), int))
+
+    start_bridge(client, server)

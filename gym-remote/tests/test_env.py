@@ -1,5 +1,7 @@
 import gym
+import os
 import time
+import gym_remote as gr
 
 from . import process_wrapper
 
@@ -76,8 +78,8 @@ def test_ts_limit(process_wrapper):
     assert env.step(0) == (0, 4, False, {})
     assert env.step(0) == (0, 5, False, {})
     try:
-        env.step(0) == (0, 5, True, {})
-    except BrokenPipeError:
+        env.step(0)
+    except gr.Bridge.Closed:
         return
     assert False, 'Remote did not shut down'
 
@@ -89,7 +91,18 @@ def test_wc_limit(process_wrapper):
     assert env.step(0) == (0, 1, False, {})
     time.sleep(0.2)
     try:
-        env.step(0) == (0, 2, False, {})
-    except BrokenPipeError:
+        env.step(0)
+    except gr.Bridge.Closed:
         return
     assert False, 'Remote did not shut down'
+
+
+def test_cleanup(process_wrapper):
+    env = BitEnv()
+    env = process_wrapper(env)
+
+    assert os.path.exists(os.path.join(env.bridge.base, 'sock'))
+
+    env.close()
+
+    assert not os.path.exists(os.path.join(env.bridge.base, 'sock'))

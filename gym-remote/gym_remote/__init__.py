@@ -147,16 +147,23 @@ class NpChannel(Channel):
 
 
 class Bridge:
-    timeout = socket.timeout
+    Timeout = socket.timeout
+    Closed = BrokenPipeError
 
     def __init__(self, base):
         self.base = base
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 
+        def close(*args):
+            self.close()
+            raise self.Closed
+
         self._channels = {}
         self.connection = None
+        self._buffer = []
         self._message_handlers = {
-            'update': self.update_vars
+            'update': self.update_vars,
+            'close': close
         }
 
     def __del__(self):
@@ -237,17 +244,29 @@ class Bridge:
         return dict(self._channels)
 
     def _send_message(self, type, content):
+        if not self.connection:
+            raise self.Closed
         message = {
             'type': type,
             'content': content
         }
-        message = json.dumps(message)
+        # All messages end in a form feed
+        message = json.dumps(message) + '\f'
         self.connection.sendall(message.encode('utf8'))
 
     def _recv_message(self):
-        message = self.connection.recv(4096)
-        if not message:
-            return None
+        if not self.connection:
+            raise self.Closed
+        while len(self._buffer) < 2:
+            # There are no fully buffered messages
+            message = self.connection.recv(4096)
+            if not message:
+                raise self.Closed
+            message = message.split(b'\f')
+            if self._buffer:
+                self._buffer[-1] += message.pop(0)
+            self._buffer.extend(message)
+        message = self._buffer.pop(0)
         return json.loads(message.decode('utf8'))
 
     def update_vars(self, vars):
@@ -259,21 +278,44 @@ class Bridge:
         for name, channel in self._channels.items():
             if channel.dirty:
                 content[name] = channel.serialize()
-        self._send_message('update', content)
+        try:
+            self._send_message('update', content)
+        except self.Closed:
+            self.close()
+            raise
 
     def recv(self):
         message = self._recv_message()
         if not message:
-            return False
+            raise self.Closed
         self._message_handlers[message['type']](message['content'])
         return True
 
     def close(self):
+        if self.sock:
+            try:
+                self._send_message('close', None)
+            except self.Closed:
+                pass
+            self.sock.close()
         if self.connection and self.connection != self.sock:
             self.connection.close()
-        self.sock.close()
+            try:
+                os.unlink(os.path.join(self.base, 'sock'))
+            except OSError:
+                pass
+            for name, channel in self._channels.items():
+                try:
+                    os.unlink(os.path.join(self.base, name))
+                except OSError:
+                    pass
+        self.connection = None
+        self.sock = None
 
     def settimeout(self, timeout):
         self.sock.settimeout(timeout)
         if self.connection:
             self.connection.settimeout(timeout)
+
+    def __del__(self):
+        self.close()

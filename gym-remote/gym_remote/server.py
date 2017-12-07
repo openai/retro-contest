@@ -24,7 +24,7 @@ class RemoteEnvWrapper(gym.Wrapper):
 
         try:
             self.bridge.server_accept()
-        except Bridge.timeout:
+        except Bridge.Timeout:
             return ts
 
         while timestep_limit is None or ts < timestep_limit:
@@ -35,7 +35,7 @@ class RemoteEnvWrapper(gym.Wrapper):
                 self.bridge.settimeout(end - t)
             try:
                 self.bridge.recv()
-            except Bridge.timeout:
+            except (Bridge.Timeout, Bridge.Closed):
                 break
 
             if self.ch_reset.value:
@@ -51,4 +51,9 @@ class RemoteEnvWrapper(gym.Wrapper):
             self.bridge.send()
             ts += 1
 
+        self.bridge.close()
         return ts
+
+    def _close(self):
+        self.bridge.close()
+        self.env.close()

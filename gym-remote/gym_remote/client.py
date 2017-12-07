@@ -31,9 +31,7 @@ class RemoteEnv(gym.Env):
     def _step(self, action):
         self.ch_ac.value = action
         self.bridge.send()
-        if not self.bridge.recv():
-            self.close()
-            raise BrokenPipeError('Remote has shut down')
+        self.bridge.recv()
 
         return self.ch_ob.value, self.ch_reward.value, self.ch_done.value, {}
 
@@ -42,3 +40,6 @@ class RemoteEnv(gym.Env):
         self.bridge.send()
         self.bridge.recv()
         return self.ch_ob.value
+
+    def _close(self):
+        self.bridge.close()
