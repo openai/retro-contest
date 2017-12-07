@@ -4,6 +4,7 @@ import tempfile
 from gym_remote.client import RemoteEnv
 from gym_remote.server import RemoteEnvWrapper
 
+
 @pytest.fixture(scope='function')
 def tempdir():
     with tempfile.TemporaryDirectory() as dir:

@@ -276,6 +276,7 @@ def test_bridge_client_buffered_clean(tempdir):
 
     start_bridge(client, server)
 
+
 def test_bridge_server_clean(tempdir):
     import numpy as np
     client, server = setup_client_server(tempdir)

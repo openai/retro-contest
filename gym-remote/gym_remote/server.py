@@ -3,6 +3,7 @@ import time
 
 from gym_remote import Bridge, FloatChannel, BoolChannel
 
+
 class RemoteEnvWrapper(gym.Wrapper):
     def __init__(self, env, directory):
         gym.Wrapper.__init__(self, env)

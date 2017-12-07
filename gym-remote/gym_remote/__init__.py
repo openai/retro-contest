@@ -5,6 +5,7 @@ import numpy as np
 import os
 import socket
 
+
 class Channel:
     def __init__(self):
         self.sock = None
@@ -200,7 +201,7 @@ class Bridge:
             channel = NpChannel(space.shape, np.uint8)
             channel.annotate('type', 'Box')
             channel.annotate('shape', space.shape)
-        
+
         if not channel:
             raise NotImplementedError('Unsupported space')
 

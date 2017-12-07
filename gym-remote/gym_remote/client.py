@@ -2,6 +2,7 @@ import gym
 
 from gym_remote import Bridge
 
+
 class RemoteEnv(gym.Env):
     def __init__(self, directory):
         self.bridge = Bridge(directory)
