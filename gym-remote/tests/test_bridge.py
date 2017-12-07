@@ -233,11 +233,11 @@ def test_bridge_client_clean(tempdir):
     assert os.path.exists(os.path.join(tempdir, 'sock'))
     assert os.path.exists(os.path.join(tempdir, 'np'))
 
-    client.close()
+    client.close('disconnect')
     try:
         server.recv()
-    except gr.Bridge.Closed:
-        pass
+    except gr.Bridge.Closed as e:
+        assert str(e) == 'disconnect'
 
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
     assert not os.path.exists(os.path.join(tempdir, 'np'))
@@ -261,11 +261,11 @@ def test_bridge_client_buffered_clean(tempdir):
     assert os.path.exists(os.path.join(tempdir, 'sock'))
     assert os.path.exists(os.path.join(tempdir, 'np'))
 
-    client.close()
+    client.close('disconnect')
     try:
         server.send()
         server.recv()
-    except gr.Bridge.Closed:
+    except gr.Bridge.Closed as e:
         pass
 
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
@@ -290,11 +290,11 @@ def test_bridge_server_clean(tempdir):
     assert os.path.exists(os.path.join(tempdir, 'sock'))
     assert os.path.exists(os.path.join(tempdir, 'np'))
 
-    server.close()
+    server.close('disconnect')
     try:
         client.recv()
-    except gr.Bridge.Closed:
-        pass
+    except gr.Bridge.Closed as e:
+        assert str(e) == 'disconnect'
 
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
     assert not os.path.exists(os.path.join(tempdir, 'np'))
@@ -318,11 +318,11 @@ def test_bridge_server_buffered_clean(tempdir):
     assert os.path.exists(os.path.join(tempdir, 'sock'))
     assert os.path.exists(os.path.join(tempdir, 'np'))
 
-    server.close()
+    server.close('disconnect')
     try:
         client.send()
         client.recv()
-    except gr.Bridge.Closed:
+    except gr.Bridge.Closed as e:
         pass
 
     assert not os.path.exists(os.path.join(tempdir, 'sock'))

@@ -2,6 +2,7 @@ import gym
 import os
 import time
 import gym_remote as gr
+import gym_remote.exceptions as gre
 
 from . import process_wrapper
 
@@ -79,8 +80,10 @@ def test_ts_limit(process_wrapper):
     assert env.step(0) == (0, 5, False, {})
     try:
         env.step(0)
-    except gr.Bridge.Closed:
+    except gre.TimestepTimeoutError as e:
         return
+    except:
+        assert False, 'Incorrect exception'
     assert False, 'Remote did not shut down'
 
 
@@ -92,8 +95,10 @@ def test_wc_limit(process_wrapper):
     time.sleep(0.2)
     try:
         env.step(0)
-    except gr.Bridge.Closed:
+    except gre.WallClockTimeoutError as e:
         return
+    except:
+        assert False, 'Incorrect exception'
     assert False, 'Remote did not shut down'
 
 
@@ -104,5 +109,6 @@ def test_cleanup(process_wrapper):
     assert os.path.exists(os.path.join(env.bridge.base, 'sock'))
 
     env.close()
+    time.sleep(0.1)
 
     assert not os.path.exists(os.path.join(env.bridge.base, 'sock'))

@@ -2,6 +2,7 @@ import gym
 import time
 
 from gym_remote import Bridge, FloatChannel, BoolChannel
+import gym_remote.exceptions as gre
 
 
 class RemoteEnvWrapper(gym.Wrapper):
@@ -32,11 +33,16 @@ class RemoteEnvWrapper(gym.Wrapper):
             if wallclock_limit:
                 t = time.time()
                 if t >= end:
+                    self.bridge.close(exception=gre.WallClockTimeoutError)
                     break
                 self.bridge.settimeout(end - t)
             try:
                 self.bridge.recv()
-            except (Bridge.Timeout, Bridge.Closed):
+            except Bridge.Timeout:
+                self.bridge.close(exception=gre.WallClockTimeoutError)
+                break
+            except Bridge.Closed:
+                self.bridge.close(exception=gre.ClientDisconnectError)
                 break
 
             if self.ch_reset.value:
@@ -52,7 +58,8 @@ class RemoteEnvWrapper(gym.Wrapper):
             self.bridge.send()
             ts += 1
 
-        self.bridge.close()
+        if timestep_limit and ts >= timestep_limit:
+            self.bridge.close(exception=gre.TimestepTimeoutError)
         return ts
 
     def _close(self):
