@@ -3,7 +3,7 @@ FROM ubuntu:xenial
 # Set up dependency layers
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        python3-venv libpython3-dev cmake libzip-dev build-essential && \
+        build-essential cmake libpython3-dev libzip-dev pkg-config python3-venv && \
     apt-get clean
 
 SHELL ["/bin/bash", "-c"]
@@ -14,16 +14,17 @@ RUN python3 -m venv ~/venv && \
 
 # Set up competition-specific layers
 COPY gym-retro /tmp/gym-retro
-COPY gym-remote /tmp/gym-remote
+COPY support /tmp/support
 RUN rm -rf /tmp/gym-retro/.git
 RUN . ~/venv/bin/activate && \
-    pip install /tmp/gym-retro /tmp/gym-remote && \
+    pip install /tmp/gym-retro /tmp/support && \
     rm -r ~/.cache
 
 RUN echo remote-env > /root/hostname
-RUN mkdir -p /root/compo/tmp /root/roms
+RUN mkdir -p /root/compo/tmp /root/compo/results /root/roms
 COPY setup/bash_profile /root/.bash_profile
 
 VOLUME /root/compo/tmp
+VOLUME /root/compo/results
 WORKDIR /root/compo
-ENTRYPOINT bash -l
+ENTRYPOINT ["bash", "-lc", "exec $0 $@"]

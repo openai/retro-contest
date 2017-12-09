@@ -93,15 +93,15 @@ def test_bridge_bool(tempdir):
     server.send()
     client.recv()
 
-    assert server._channels['bool'].value == True
-    assert client._channels['bool'].value == True
+    assert server._channels['bool'].value is True
+    assert client._channels['bool'].value is True
 
     server._channels['bool'].value = False
     server.send()
     client.recv()
 
-    assert server._channels['bool'].value == False
-    assert client._channels['bool'].value == False
+    assert server._channels['bool'].value is False
+    assert client._channels['bool'].value is False
 
 
 def test_bridge_int_fold(tempdir):
@@ -120,15 +120,15 @@ def test_bridge_int_fold(tempdir):
     server.send()
     client.recv()
 
-    assert server._channels['int_fold'].value == [1, 2]
-    assert client._channels['int_fold'].value == [1, 2]
+    assert (server._channels['int_fold'].value == [1, 2]).all()
+    assert (client._channels['int_fold'].value == [1, 2]).all()
 
     server._channels['int_fold'].value = [0, 1]
     server.send()
     client.recv()
 
-    assert server._channels['int_fold'].value == [0, 1]
-    assert client._channels['int_fold'].value == [0, 1]
+    assert (server._channels['int_fold'].value == [0, 1]).all()
+    assert (client._channels['int_fold'].value == [0, 1]).all()
 
 
 def test_bridge_np(tempdir):
@@ -156,6 +156,51 @@ def test_bridge_np(tempdir):
     assert (client._channels['np'].value == np.ones((2, 2))).all()
 
 
+def test_bridge_np_int16(tempdir):
+    import numpy as np
+    client, server = setup_client_server(tempdir)
+    ldtype = np.dtype('<u2')
+    bdtype = np.dtype('>u2')
+    server.add_channel('npl', gr.NpChannel((2, 2), ldtype))
+    server.add_channel('npb', gr.NpChannel((2, 2), bdtype))
+
+    start_bridge(client, server)
+
+    assert set(server._channels.keys()) == {'npl', 'npb'}
+    assert set(client._channels.keys()) == {'npl', 'npb'}
+
+    assert server._channels['npl'].dtype == client._channels['npl'].dtype
+    assert server._channels['npb'].dtype == client._channels['npb'].dtype
+
+    server._channels['npl'].value = np.array((1, 0x100), ldtype)
+    server.send()
+    client.recv()
+
+    assert (server._channels['npl'].value == [1, 0x100]).all()
+    assert (client._channels['npl'].value == [1, 0x100]).all()
+
+    server._channels['npl'].value = np.array((0x100, 1), ldtype)
+    server.send()
+    client.recv()
+
+    assert (server._channels['npl'].value == [0x100, 1]).all()
+    assert (client._channels['npl'].value == [0x100, 1]).all()
+
+    server._channels['npb'].value = np.array((1, 0x100), bdtype)
+    server.send()
+    client.recv()
+
+    assert (server._channels['npb'].value == [1, 0x100]).all()
+    assert (client._channels['npb'].value == [1, 0x100]).all()
+
+    server._channels['npb'].value = np.array((0x100, 1), bdtype)
+    server.send()
+    client.recv()
+
+    assert (server._channels['npb'].value == [0x100, 1]).all()
+    assert (client._channels['npb'].value == [0x100, 1]).all()
+
+
 def test_bridge_multi(tempdir):
     client, server = setup_client_server(tempdir)
     server.add_channel('int', gr.IntChannel())
@@ -177,8 +222,8 @@ def test_bridge_multi(tempdir):
 
     assert server._channels['int'].value is None
     assert client._channels['int'].value is None
-    assert server._channels['bool'].value == True
-    assert client._channels['bool'].value == True
+    assert server._channels['bool'].value is True
+    assert client._channels['bool'].value is True
 
     server._channels['int'].value = 1
     server.send()
@@ -186,8 +231,8 @@ def test_bridge_multi(tempdir):
 
     assert server._channels['int'].value is 1
     assert client._channels['int'].value is 1
-    assert server._channels['bool'].value == True
-    assert client._channels['bool'].value == True
+    assert server._channels['bool'].value is True
+    assert client._channels['bool'].value is True
 
     server._channels['bool'].value = False
     server._channels['int'].value = 2
@@ -196,8 +241,8 @@ def test_bridge_multi(tempdir):
 
     assert server._channels['int'].value is 2
     assert client._channels['int'].value is 2
-    assert server._channels['bool'].value == False
-    assert client._channels['bool'].value == False
+    assert server._channels['bool'].value is False
+    assert client._channels['bool'].value is False
 
 
 def test_bridge_clean(tempdir):
@@ -242,11 +287,6 @@ def test_bridge_client_clean(tempdir):
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
     assert not os.path.exists(os.path.join(tempdir, 'np'))
 
-    client, server = setup_client_server(tempdir)
-    server.add_channel('np', gr.NpChannel((2, 2), int))
-
-    start_bridge(client, server)
-
 
 def test_bridge_client_buffered_clean(tempdir):
     import numpy as np
@@ -271,11 +311,6 @@ def test_bridge_client_buffered_clean(tempdir):
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
     assert not os.path.exists(os.path.join(tempdir, 'np'))
 
-    client, server = setup_client_server(tempdir)
-    server.add_channel('np', gr.NpChannel((2, 2), int))
-
-    start_bridge(client, server)
-
 
 def test_bridge_server_clean(tempdir):
     import numpy as np
@@ -299,10 +334,22 @@ def test_bridge_server_clean(tempdir):
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
     assert not os.path.exists(os.path.join(tempdir, 'np'))
 
-    client, server = setup_client_server(tempdir)
+
+def test_bridge_server_noclient_clean(tempdir):
+    import numpy as np
+    server = gr.Bridge(tempdir)
+    server.listen()
     server.add_channel('np', gr.NpChannel((2, 2), int))
 
-    start_bridge(client, server)
+    assert list(server._channels.keys()) == ['np']
+
+    assert os.path.exists(os.path.join(tempdir, 'sock'))
+    assert os.path.exists(os.path.join(tempdir, 'np'))
+
+    server.close('disconnect')
+
+    assert not os.path.exists(os.path.join(tempdir, 'sock'))
+    assert not os.path.exists(os.path.join(tempdir, 'np'))
 
 
 def test_bridge_server_buffered_clean(tempdir):
@@ -327,8 +374,3 @@ def test_bridge_server_buffered_clean(tempdir):
 
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
     assert not os.path.exists(os.path.join(tempdir, 'np'))
-
-    client, server = setup_client_server(tempdir)
-    server.add_channel('np', gr.NpChannel((2, 2), int))
-
-    start_bridge(client, server)

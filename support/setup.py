@@ -21,19 +21,29 @@ else:
         if version.distance:
             v = '+' + version.node
         return v
-    use_scm_version = {'write_to': 'retro/VERSION.txt',
+    use_scm_version = {'write_to': 'gym_remote/VERSION.txt',
                        'version_scheme': version_scheme,
                        'local_scheme': local_scheme}
 
 
 setup(
-    name='gym-remote',
+    name='retro-challenge-support',
     version=open(VERSION_PATH, 'r').read(),
     license='MIT',
     install_requires=[
         'gym',
     ],
-    packages=['gym_remote'],
+    extras_require={
+        'retro': 'retro'
+    },
+    entry_points={
+        'console_scripts': [
+            'retro-challenge-remote=retro_challenge.remote:main [retro]',
+            'retro-challenge-agent=retro_challenge.agent:main'
+        ]
+    },
+    packages=['gym_remote', 'retro_challenge'],
     setup_requires=['pytest-runner'],
-    use_scm_version=use_scm_version
+    use_scm_version=use_scm_version,
+    zip_safe=True
 )

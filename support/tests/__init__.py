@@ -15,8 +15,8 @@ def tempdir():
 def process_wrapper():
     with tempfile.TemporaryDirectory() as dir:
         def serve(pipe):
-            env = pipe.recv()
-            env = RemoteEnvWrapper(env, dir)
+            make_env = pipe.recv()
+            env = RemoteEnvWrapper(make_env(), dir)
             pipe.send('ok')
 
             args = pipe.recv()

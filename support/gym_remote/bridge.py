@@ -91,28 +91,22 @@ class BoolChannel(Channel):
 class IntFoldChannel(Channel):
     TYPE = 'int_fold'
 
-    def __init__(self, folds):
+    def __init__(self, folds, dtype=np.int8):
         super(IntFoldChannel, self).__init__()
-        self.folds = list(folds)
+        self.folds = np.multiply.accumulate([1] + list(folds)[:-1], dtype=int)
+        self.ranges = np.array(folds, dtype=int)
+        self.dtype = dtype
         self.SHAPE = str(folds) + ','
 
     def parse(self, value):
-        folded = 0
-        coeff = 1
-        for fold, entry in zip(self.folds, value):
-            folded += entry * coeff
-            coeff *= fold
+        folded = np.dot(self.folds, value % self.ranges)
         return int(folded)
 
     def unparse(self, value):
         if value is None:
             return None
-        unfolded = []
-        coeff = 1
-        for fold in self.folds:
-            unfolded.append((value // coeff) % fold)
-            coeff *= fold
-        return unfolded
+        unfolded = np.full(self.ranges.shape, value) // self.folds % self.ranges
+        return unfolded.astype(self.dtype)
 
     def deserialize(self, value):
         self._value = int(value)
@@ -124,7 +118,7 @@ class NpChannel(Channel):
 
     def __init__(self, shape, dtype):
         super(NpChannel, self).__init__()
-        self.SHAPE = '%s, %s' % (shape, 'dtype("%s")' % np.dtype(dtype).name)
+        self.SHAPE = '%s, %s' % (shape, 'dtype("%s")' % np.dtype(dtype).str)
         self.shape = shape
         self.dtype = dtype
 
@@ -179,13 +173,14 @@ class Bridge:
         if name in self._channels:
             raise KeyError(name)
         self._channels[name] = channel
+        channel.set_base(os.path.join(self.base, name))
         return channel
 
     def wrap(self, name, space):
         channel = None
         if isinstance(space, gym.spaces.MultiBinary):
             if space.n < 64:
-                channel = IntFoldChannel([2] * space.n)
+                channel = IntFoldChannel([2] * space.n, np.uint8)
             else:
                 channel = NpChannel((space.n,), np.uint8)
             channel.annotate('n', space.n)
@@ -203,7 +198,7 @@ class Bridge:
                 channel.annotate('shape', space.shape)
             channel.annotate('type', 'MultiDiscrete')
         elif isinstance(space, gym.spaces.Box):
-            channel = NpChannel(space.shape, np.uint8)
+            channel = NpChannel(space.shape, space.high.dtype)
             channel.annotate('type', 'Box')
             channel.annotate('shape', space.shape)
 
@@ -211,6 +206,20 @@ class Bridge:
             raise NotImplementedError('Unsupported space')
 
         return self.add_channel(name, channel)
+
+    @staticmethod
+    def unwrap(space):
+        if space.annotations['type'] == 'MultiBinary':
+            return gym.spaces.MultiBinary(int(space.annotations['n']))
+        if space.annotations['type'] == 'Discrete':
+            return gym.spaces.Discrete(int(space.annotations['n']))
+        if space.annotations['type'] == 'MultiDiscrete':
+            if gym.version >= '0.9.5':
+                return gym.spaces.MultiDiscrete(space.shape[0])
+            else:
+                return gym.spaces.MultiDiscrete(space.shape)
+        if space.annotations['type'] == 'Box':
+            return gym.spaces.Box(low=0, high=255, shape=space.shape)
 
     def configure_channels(self, channel_info):
         for name, info in channel_info.items():
@@ -236,7 +245,6 @@ class Bridge:
         self.connection, _ = self.sock.accept()
         for name, channel in self._channels.items():
             channel.set_socket(self.connection)
-            channel.set_base(os.path.join(self.base, name))
         description = self.describe_channels()
         self._send_message('description', description)
 
@@ -312,8 +320,9 @@ class Bridge:
             except self.Closed:
                 pass
             self.sock.close()
-        if self.connection and self.connection != self.sock:
-            self.connection.close()
+        if self.sock and self.connection != self.sock:
+            if self.connection:
+                self.connection.close()
             try:
                 os.unlink(os.path.join(self.base, 'sock'))
             except OSError:

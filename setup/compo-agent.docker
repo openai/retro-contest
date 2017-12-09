@@ -14,9 +14,9 @@ RUN python3 -m venv ~/venv && \
     rm -r ~/.cache
 
 # Set up competition-specific layers
-COPY gym-remote /tmp/gym-remote
+COPY support /tmp/support
 RUN . ~/venv/bin/activate && \
-    pip install /tmp/gym-remote && \
+    pip install /tmp/support && \
     rm -r ~/.cache
 
 RUN echo compo-agent > /root/hostname
@@ -24,4 +24,4 @@ RUN mkdir -p /root/compo/tmp
 COPY setup/bash_profile /root/.bash_profile
 VOLUME /root/compo/tmp
 WORKDIR /root/compo
-ENTRYPOINT bash -l
+ENTRYPOINT ["bash", "-lc", "exec $0 $@"]
