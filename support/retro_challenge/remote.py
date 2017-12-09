@@ -5,7 +5,9 @@ import retro
 import sys
 
 
-def make(game, state, bk2dir=None, socketdir='tmp/sock'):
+def make(game, state, bk2dir=None, monitordir=None, socketdir='tmp/sock'):
+    if bk2dir:
+        os.makedirs(bk2dir, exist_ok=True)
     env = retro.make(game, state, record=bk2dir or False)
     env = grs.RemoteEnvWrapper(env, socketdir)
     return env
@@ -20,7 +22,7 @@ def run(game, state,
         if pid > 0:
             return
 
-    env = make(game, state, bk2dir, socketdir)
+    env = make(game, state, bk2dir, monitordir, socketdir)
     env.serve(timestep_limit=timestep_limit, wallclock_limit=wallclock_limit)
 
 
@@ -83,6 +85,7 @@ def main(argv=sys.argv[1:]):
 
     args = parser.parse_args(argv)
     args.func(args)
+
 
 if __name__ == '__main__':
     main()

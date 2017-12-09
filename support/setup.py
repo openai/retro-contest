@@ -34,12 +34,14 @@ setup(
         'gym',
     ],
     extras_require={
-        'retro': 'retro'
+        'retro': 'retro',
+        'docker': 'docker'
     },
     entry_points={
         'console_scripts': [
             'retro-challenge-remote=retro_challenge.remote:main [retro]',
-            'retro-challenge-agent=retro_challenge.agent:main'
+            'retro-challenge-agent=retro_challenge.agent:main',
+            'retro-challenge=retro_challenge.docker:main'
         ]
     },
     packages=['gym_remote', 'retro_challenge'],
