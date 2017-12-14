@@ -13,6 +13,8 @@ def run(game, state=None, entry=None, **kwargs):
         remote_command.extend(['-W', str(kwargs['wallclock_limit'])])
     if 'timestep_limit' is kwargs:
         remote_command.extend(['-T', str(kwargs['timestep_limit'])])
+    if 'discrete_actions' is kwargs:
+        remote_command.extend(['-D'])
 
     if entry:
         agent_command.append(entry)
@@ -64,12 +66,14 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
     parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
     parser.add_argument('--results-dir', '-r', type=str, help='Path to output results')
+    parser.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
 
     args = parser.parse_args(argv)
     kwargs = {
         'entry_args': args.args,
         'wallclock_limit': args.wallclock_limit,
         'timestep_limit': args.timestep_limit,
+        'discrete_actions': args.discrete_actions,
     }
 
     if args.no_nv:
