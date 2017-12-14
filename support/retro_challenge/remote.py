@@ -1,10 +1,12 @@
 import argparse
+import csv
 import gym
 import gym_remote.server as grs
 import numpy as np
 import os
 import retro
 import sys
+import time
 
 
 class StochasticFrameSkip(gym.Wrapper):
@@ -40,6 +42,39 @@ class StochasticFrameSkip(gym.Wrapper):
         return ob, totrew, done, info
 
 
+class Monitor(gym.Wrapper):
+    def __init__(self, env, monitorfile):
+        gym.Wrapper.__init__(self, env)
+        self.file = open(monitorfile, 'w')
+        self.csv = csv.DictWriter(self.file, ['r', 'l', 't'])
+        self.episode_reward = 0
+        self.episode_length = 0
+        self.start = None
+        self.csv.writeheader()
+
+    def _reset(self, **kwargs):
+        if not self.start:
+            self.start = time.time()
+        else:
+            self.csv.writerow({
+                'r': self.episode_reward,
+                'l': self.episode_length,
+                't': time.time() - self.start
+            })
+        self.episode_length = 0
+        self.episode_reward = 0
+        return self.env.reset(**kwargs)
+
+    def _step(self, ac):
+        ob, rew, done, info = self.env.step(ac)
+        self.episode_length += 1
+        self.episode_reward += rew
+        return ob, rew, done, info
+
+    def __del__(self):
+        self.file.close()
+
+
 def make(game, state, bk2dir=None, monitordir=None, discrete_actions=False, socketdir='tmp/sock'):
     if bk2dir:
         os.makedirs(bk2dir, exist_ok=True)
@@ -49,6 +84,8 @@ def make(game, state, bk2dir=None, monitordir=None, discrete_actions=False, sock
     env = retro.make(game, state, record=bk2dir or False, use_restricted_actions=use_restricted_actions)
     env = StochasticFrameSkip(env, n=4, stickprob=0.25)
     env = gym.wrappers.TimeLimit(env, max_episode_steps=4500)
+    if monitordir:
+        env = Monitor(env, os.path.join(monitordir, 'monitor.csv'))
     env = grs.RemoteEnvWrapper(env, socketdir)
     return env
 

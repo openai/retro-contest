@@ -6,7 +6,7 @@ import sys
 
 def run(game, state=None, entry=None, **kwargs):
     client = docker.from_env()
-    remote_command = ['retro-challenge-remote', 'run', game, state, '-b', 'results/bk2', '-m', 'results/monitor']
+    remote_command = ['retro-challenge-remote', 'run', game, state, '-b', 'results/bk2', '-m', 'results']
     agent_command = ['retro-challenge-agent']
 
     if 'wallclock_limit' in kwargs:
