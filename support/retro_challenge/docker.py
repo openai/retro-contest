@@ -53,6 +53,15 @@ def run(game, state=None, entry=None, **kwargs):
 
     remote.remove()
     agent.remove()
+    if 'resultsdir' in kwargs:
+        with open(os.path.join(results, 'remote-stdout.txt'), 'w') as f:
+            f.write(logs['remote'][0].decode('utf-8'))
+        with open(os.path.join(results, 'remote-stderr.txt'), 'w') as f:
+            f.write(logs['remote'][1].decode('utf-8'))
+        with open(os.path.join(results, 'agent-stdout.txt'), 'w') as f:
+            f.write(logs['agent'][0].decode('utf-8'))
+        with open(os.path.join(results, 'agent-stderr.txt'), 'w') as f:
+            f.write(logs['agent'][1].decode('utf-8'))
     return logs
 
 
