@@ -40,7 +40,10 @@ def run(game, state=None, entry=None, **kwargs):
                                   runtime=kwargs.get('runtime', 'nvidia'),
                                   **container_kwargs)
 
-    remote.wait()
+    try:
+        remote.wait()
+    except KeyboardInterrupt:
+        remote.kill()
     try:
         agent.wait(timeout=5)
     except requests.exceptions.ReadTimeout:
