@@ -68,19 +68,7 @@ def run(game, state=None, entry=None, **kwargs):
     return logs
 
 
-def main(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='Run Retro Challenge Docker containers')
-    parser.add_argument('game', type=str, help='Name of the game to run')
-    parser.add_argument('state', type=str, default=None, nargs='?', help='Name of initial state')
-    parser.add_argument('--entry', '-e', type=str, help='Name of agent entry point')
-    parser.add_argument('--args', '-A', type=str, nargs='+', help='Extra agent entry arguments')
-    parser.add_argument('--wallclock-limit', '-W', type=float, default=None, help='Maximum time to run in seconds')
-    parser.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
-    parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
-    parser.add_argument('--results-dir', '-r', type=str, help='Path to output results')
-    parser.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
-
-    args = parser.parse_args(argv)
+def run_args(args):
     kwargs = {
         'entry_args': args.args,
         'wallclock_limit': args.wallclock_limit,
@@ -95,6 +83,26 @@ def main(argv=sys.argv[1:]):
         kwargs['resultsdir'] = args.results_dir
 
     run(args.game, args.state, args.entry, **kwargs)
+
+
+def init_parser(parser):
+    parser.set_defaults(func=run_args)
+    parser.add_argument('game', type=str, help='Name of the game to run')
+    parser.add_argument('state', type=str, default=None, nargs='?', help='Name of initial state')
+    parser.add_argument('--entry', '-e', type=str, help='Name of agent entry point')
+    parser.add_argument('--args', '-A', type=str, nargs='+', help='Extra agent entry arguments')
+    parser.add_argument('--wallclock-limit', '-W', type=float, default=None, help='Maximum time to run in seconds')
+    parser.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
+    parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
+    parser.add_argument('--results-dir', '-r', type=str, help='Path to output results')
+    parser.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
+
+
+def main(argv=sys.argv[1:]):
+    parser = argparse.ArgumentParser(description='Run Retro Challenge support code')
+    init_parser(parser)
+    args = parser.parse_args(argv)
+    args.func(args)
 
 
 if __name__ == '__main__':
