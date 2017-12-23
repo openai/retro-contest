@@ -11,9 +11,9 @@ def run(game, state=None, entry=None, **kwargs):
 
     if 'wallclock_limit' in kwargs:
         remote_command.extend(['-W', str(kwargs['wallclock_limit'])])
-    if 'timestep_limit' is kwargs:
+    if 'timestep_limit' in kwargs:
         remote_command.extend(['-T', str(kwargs['timestep_limit'])])
-    if 'discrete_actions' is kwargs:
+    if 'discrete_actions' in kwargs:
         remote_command.extend(['-D'])
 
     if entry:
