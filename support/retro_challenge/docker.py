@@ -35,7 +35,7 @@ def run(game, state=None, entry=None, **kwargs):
                                             results: {'bind': '/root/compo/results'}},
                                    **container_kwargs)
 
-    agent = client.containers.run('compo-agent', agent_command,
+    agent = client.containers.run('agent', agent_command,
                                   volumes={'compo-tmp-vol': {'bind': '/root/compo/tmp'}},
                                   runtime=kwargs.get('runtime', 'nvidia'),
                                   **container_kwargs)

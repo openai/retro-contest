@@ -12,7 +12,8 @@ RUN apt-get update && \
     rm -r ~/.cache
 
 # Set up competition-specific layers
-COPY gym-retro support /tmp/
+COPY gym-retro /tmp/gym-retro
+copy support /tmp/support
 RUN . ~/venv/bin/activate && \
     pip install /tmp/gym-retro /tmp/support && \
     rm -r ~/.cache && \

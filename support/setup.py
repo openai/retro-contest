@@ -36,7 +36,7 @@ setup(
     extras_require={
         'retro': 'retro',
         'docker': 'docker',
-        'rest': 'docker, pyyaml, requests',
+        'rest': ['docker', 'pyyaml', 'requests'],
     },
     entry_points={
         'console_scripts': [

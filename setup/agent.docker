@@ -18,7 +18,7 @@ RUN . ~/venv/bin/activate && \
     pip install /tmp/support && \
     rm -r ~/.cache
 
-RUN echo compo-agent > /root/hostname && \
+RUN echo agent > /root/hostname && \
     mkdir -p /root/compo/tmp
 COPY setup/bash_profile /root/.bash_profile
 VOLUME /root/compo/tmp
