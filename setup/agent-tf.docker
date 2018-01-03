@@ -1,0 +1,5 @@
+FROM agent:latest
+
+RUN . ~/venv/bin/activate && \
+    pip install tensorflow-gpu==1.4 && \
+    rm -r ~/.cache
