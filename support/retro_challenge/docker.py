@@ -71,10 +71,14 @@ def run(game, state=None, entry=None, **kwargs):
 def run_args(args):
     kwargs = {
         'entry_args': args.args,
-        'wallclock_limit': args.wallclock_limit,
-        'timestep_limit': args.timestep_limit,
         'discrete_actions': args.discrete_actions,
     }
+
+    if args.wallclock_limit is not None:
+        kwargs['wallclock_limit'] = args.wallclock_limit
+
+    if args.timestep_limit is not None:
+        kwargs['timestep_limit'] = args.timestep_limit
 
     if args.no_nv:
         kwargs['runtime'] = None
