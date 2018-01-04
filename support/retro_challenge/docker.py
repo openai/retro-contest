@@ -9,23 +9,23 @@ def run(game, state=None, entry=None, **kwargs):
     remote_command = ['retro-challenge-remote', 'run', game, state, '-b', 'results/bk2', '-m', 'results']
     agent_command = ['retro-challenge-agent']
 
-    if 'wallclock_limit' in kwargs:
+    if kwargs.get('wallclock_limit') is not None:
         remote_command.extend(['-W', str(kwargs['wallclock_limit'])])
-    if 'timestep_limit' in kwargs:
+    if kwargs.get('timestep_limit') is not None:
         remote_command.extend(['-T', str(kwargs['timestep_limit'])])
-    if 'discrete_actions' in kwargs:
+    if kwargs.get('discrete_actions'):
         remote_command.extend(['-D'])
 
     if entry:
         agent_command.append(entry)
-        if 'entry_args' in kwargs:
+        if kwargs.get('entry_args'):
             agent_command.extend(kwargs['entry_args'])
 
-    if 'resultsdir' in kwargs:
+    if kwargs.get('resultsdir'):
         results = os.path.realpath(kwargs['resultsdir'])
-        os.makedirs(results, exist_ok=True)
     else:
         results = kwargs.get('resultsvol', 'compo-results')
+    os.makedirs(results, exist_ok=True)
 
     container_kwargs = {'detach': True, 'network_disabled': True}
 
@@ -35,10 +35,14 @@ def run(game, state=None, entry=None, **kwargs):
                                             results: {'bind': '/root/compo/results'}},
                                    **container_kwargs)
 
-    agent = client.containers.run('agent', agent_command,
-                                  volumes={'compo-tmp-vol': {'bind': '/root/compo/tmp'}},
-                                  runtime=kwargs.get('runtime', 'nvidia'),
-                                  **container_kwargs)
+    try:
+        agent = client.containers.run('agent', agent_command,
+                                      volumes={'compo-tmp-vol': {'bind': '/root/compo/tmp'}},
+                                      runtime=kwargs.get('runtime', 'nvidia'),
+                                      **container_kwargs)
+    except:
+        remote.kill()
+        raise
 
     try:
         remote.wait()
@@ -71,20 +75,14 @@ def run(game, state=None, entry=None, **kwargs):
 def run_args(args):
     kwargs = {
         'entry_args': args.args,
+        'wallclock_limit': args.wallclock_limit,
+        'timestep_limit': args.timestep_limit,
         'discrete_actions': args.discrete_actions,
+        'resultsdir': args.results_dir,
     }
-
-    if args.wallclock_limit is not None:
-        kwargs['wallclock_limit'] = args.wallclock_limit
-
-    if args.timestep_limit is not None:
-        kwargs['timestep_limit'] = args.timestep_limit
 
     if args.no_nv:
         kwargs['runtime'] = None
-
-    if args.results_dir:
-        kwargs['resultsdir'] = args.results_dir
 
     run(args.game, args.state, args.entry, **kwargs)
 
