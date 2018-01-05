@@ -1,6 +1,7 @@
 import argparse
 import docker
 import os
+import requests.exceptions
 import sys
 
 
