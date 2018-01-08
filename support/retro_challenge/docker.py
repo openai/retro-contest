@@ -45,31 +45,33 @@ def run(game, state=None, entry=None, **kwargs):
         remote.kill()
         raise
 
+    a_exit = None
+    r_exit = None
     try:
-        remote.wait()
+        r_exit = remote.wait()
     except KeyboardInterrupt:
         remote.kill()
     try:
-        agent.wait(timeout=5)
-    except requests.exceptions.ReadTimeout:
+        a_exit = agent.wait(timeout=5)
+    except requests.exceptions.RequestException:
         agent.kill()
 
     logs = {
-        'remote': (remote.logs(stdout=True), remote.logs(stderr=True)),
-        'agent': (agent.logs(stdout=True), agent.logs(stderr=True))
+        'remote': (r_exit, remote.logs(stdout=True), remote.logs(stderr=True)),
+        'agent': (a_exit, agent.logs(stdout=True), agent.logs(stderr=True))
     }
 
     remote.remove()
     agent.remove()
     if 'resultsdir' in kwargs:
         with open(os.path.join(results, 'remote-stdout.txt'), 'w') as f:
-            f.write(logs['remote'][0].decode('utf-8'))
-        with open(os.path.join(results, 'remote-stderr.txt'), 'w') as f:
             f.write(logs['remote'][1].decode('utf-8'))
+        with open(os.path.join(results, 'remote-stderr.txt'), 'w') as f:
+            f.write(logs['remote'][2].decode('utf-8'))
         with open(os.path.join(results, 'agent-stdout.txt'), 'w') as f:
-            f.write(logs['agent'][0].decode('utf-8'))
-        with open(os.path.join(results, 'agent-stderr.txt'), 'w') as f:
             f.write(logs['agent'][1].decode('utf-8'))
+        with open(os.path.join(results, 'agent-stderr.txt'), 'w') as f:
+            f.write(logs['agent'][2].decode('utf-8'))
     return logs
 
 
@@ -85,7 +87,9 @@ def run_args(args):
     if args.no_nv:
         kwargs['runtime'] = None
 
-    run(args.game, args.state, args.entry, **kwargs)
+    results = run(args.game, args.state, args.entry, **kwargs)
+    if results['remote'][0] or results['agent'][0]:
+        sys.exit(1)
 
 
 def init_parser(parser):
