@@ -81,7 +81,7 @@ def make(game, state, bk2dir=None, monitordir=None, discrete_actions=False, sock
     use_restricted_actions = retro.ACTIONS_FILTERED
     if discrete_actions:
         use_restricted_actions = retro.ACTIONS_DISCRETE
-    env = retro.make(game, state, record=bk2dir or False, use_restricted_actions=use_restricted_actions)
+    env = retro.make(game, state, record=bk2dir or False, scenario='contest', use_restricted_actions=use_restricted_actions)
     env = StochasticFrameSkip(env, n=4, stickprob=0.25)
     env = gym.wrappers.TimeLimit(env, max_episode_steps=4500)
     if monitordir:
