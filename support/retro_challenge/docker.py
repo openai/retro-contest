@@ -1,6 +1,7 @@
 import argparse
 import docker
 import os
+import random
 import requests.exceptions
 import sys
 
@@ -30,15 +31,16 @@ def run(game, state=None, entry=None, **kwargs):
 
     container_kwargs = {'detach': True, 'network_disabled': True}
 
-    client.volumes.create('compo-tmp-vol', driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
+    rand = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
+    bridge = client.volumes.create('compo-tmp-vol-%s' % rand, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
     remote = client.containers.run('remote-env', remote_command,
-                                   volumes={'compo-tmp-vol': {'bind': '/root/compo/tmp'},
+                                   volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
                                             results: {'bind': '/root/compo/results'}},
                                    **container_kwargs)
 
     try:
         agent = client.containers.run('agent', agent_command,
-                                      volumes={'compo-tmp-vol': {'bind': '/root/compo/tmp'}},
+                                      volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'}},
                                       runtime=kwargs.get('runtime', 'nvidia'),
                                       **container_kwargs)
     except:
@@ -71,6 +73,7 @@ def run(game, state=None, entry=None, **kwargs):
 
     remote.remove()
     agent.remove()
+    bridge.remove()
     if 'resultsdir' in kwargs:
         with open(os.path.join(results, 'remote-stdout.txt'), 'w') as f:
             f.write(logs['remote'][1].decode('utf-8'))
