@@ -46,6 +46,14 @@ def run(game, state=None, entry=None, **kwargs):
         raise
 
     a_exit = None
+
+    try:
+        # Wait to make sure agent doesn't die immediately
+        a_exit = agent.wait(timeout=5)
+        remote.kill()
+    except requests.exceptions.RequestException:
+        pass
+
     r_exit = None
     try:
         r_exit = remote.wait()
