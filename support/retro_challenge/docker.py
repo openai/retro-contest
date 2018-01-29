@@ -31,7 +31,7 @@ def run(game, state=None, entry=None, **kwargs):
 
     container_kwargs = {'detach': True, 'network_disabled': True}
 
-    rand = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz0123456789', k=8))
+    rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
     bridge = client.volumes.create('compo-tmp-vol-%s' % rand, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
     remote = client.containers.run('remote-env', remote_command,
                                    volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
