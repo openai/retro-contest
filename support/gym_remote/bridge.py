@@ -221,7 +221,10 @@ class Bridge:
             else:
                 return gym.spaces.MultiDiscrete(space.shape)
         if space.annotations['type'] == 'Box':
-            return gym.spaces.Box(low=0, high=255, shape=space.shape)
+            kwargs = {}
+            if gym_version >= (0, 9, 6):
+                kwargs['dtype'] = space.dtype
+            return gym.spaces.Box(low=0, high=255, shape=space.shape, **kwargs)
 
     def configure_channels(self, channel_info):
         for name, info in channel_info.items():

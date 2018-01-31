@@ -62,6 +62,6 @@ class RemoteEnvWrapper(gym.Wrapper):
             self.bridge.close(exception=gre.TimestepTimeoutError)
         return ts
 
-    def _close(self):
+    def close(self):
         self.bridge.close()
         self.env.close()

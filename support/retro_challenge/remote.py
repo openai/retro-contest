@@ -17,11 +17,11 @@ class StochasticFrameSkip(gym.Wrapper):
         self.curac = None
         self.rng = np.random.RandomState()
 
-    def _reset(self, **kwargs):
+    def reset(self, **kwargs):
         self.curac = None
         return self.env.reset(**kwargs)
 
-    def _step(self, ac):
+    def step(self, ac):
         done = False
         totrew = 0
         for i in range(self.n):
@@ -52,7 +52,7 @@ class Monitor(gym.Wrapper):
         self.start = None
         self.csv.writeheader()
 
-    def _reset(self, **kwargs):
+    def reset(self, **kwargs):
         if not self.start:
             self.start = time.time()
         else:
@@ -65,7 +65,7 @@ class Monitor(gym.Wrapper):
         self.episode_reward = 0
         return self.env.reset(**kwargs)
 
-    def _step(self, ac):
+    def step(self, ac):
         ob, rew, done, info = self.env.step(ac)
         self.episode_length += 1
         self.episode_reward += rew

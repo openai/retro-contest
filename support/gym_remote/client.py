@@ -16,18 +16,18 @@ class RemoteEnv(gym.Env):
         self.action_space = self.bridge.unwrap(self.ch_ac)
         self.observation_space = self.bridge.unwrap(self.ch_ob)
 
-    def _step(self, action):
+    def step(self, action):
         self.ch_ac.value = action
         self.bridge.send()
         self.bridge.recv()
 
         return self.ch_ob.value, self.ch_reward.value, self.ch_done.value, {}
 
-    def _reset(self):
+    def reset(self):
         self.ch_reset.value = True
         self.bridge.send()
         self.bridge.recv()
         return self.ch_ob.value
 
-    def _close(self):
+    def close(self):
         self.bridge.close()
