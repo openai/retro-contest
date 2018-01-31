@@ -1,6 +1,6 @@
 FROM agent:latest
 
 RUN . ~/venv/bin/activate && \
-    pip install http://download.pytorch.org/whl/cu80/torch-0.3.0.post4-cp35-cp35m-linux_x86_64.whl && \
+    pip install http://download.pytorch.org/whl/cu90/torch-0.3.0.post4-cp35-cp35m-linux_x86_64.whl && \
     pip install torchvision && \
     rm -r ~/.cache
