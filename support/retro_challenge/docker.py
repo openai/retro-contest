@@ -100,6 +100,10 @@ def run_args(args):
 
     results = run(args.game, args.state, args.entry, **kwargs)
     if results['remote'][0] or results['agent'][0]:
+        if results['remote'][0]:
+            print('Remote exited uncleanly')
+        if results['agent'][0]:
+            print('Agent exited uncleanly')
         sys.exit(1)
 
 
