@@ -5,6 +5,8 @@ import numpy as np
 import os
 import socket
 
+gym_version = tuple(int(x) for x in gym.__version__.split('.'))
+
 
 class Channel:
     def __init__(self):
@@ -190,7 +192,7 @@ class Bridge:
             channel.annotate('n', space.n)
             channel.annotate('type', 'Discrete')
         elif isinstance(space, gym.spaces.MultiDiscrete):
-            if gym.version >= '0.9.5':
+            if gym_version >= (0, 9, 6):
                 channel = NpChannel(space.shape, np.int64)
                 channel.annotate('shape', space.shape[0])
             else:
@@ -214,7 +216,7 @@ class Bridge:
         if space.annotations['type'] == 'Discrete':
             return gym.spaces.Discrete(int(space.annotations['n']))
         if space.annotations['type'] == 'MultiDiscrete':
-            if gym.version >= '0.9.5':
+            if gym_version >= (0, 9, 6):
                 return gym.spaces.MultiDiscrete(space.shape[0])
             else:
                 return gym.spaces.MultiDiscrete(space.shape)
