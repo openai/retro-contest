@@ -4,7 +4,7 @@ FROM ubuntu:xenial
 SHELL ["/bin/bash", "-c"]
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        build-essential cmake libpython3-dev libzip-dev pkg-config python3-venv && \
+        build-essential cmake libpython3-dev libzip-dev pkg-config python3-venv git && \
     apt-get clean && \
     python3 -m venv ~/venv && \
     . ~/venv/bin/activate && \
@@ -15,6 +15,7 @@ RUN apt-get update && \
 COPY gym-retro /tmp/gym-retro
 copy support /tmp/support
 RUN . ~/venv/bin/activate && \
+    pip install git+https://github.com/openai/gym.git@1ee888390ff29e850f8cc468678d5fdbff654087 && \
     pip install /tmp/gym-retro /tmp/support && \
     rm -r ~/.cache && \
     echo remote-env > /root/hostname && \
