@@ -48,41 +48,63 @@ def run(game, state=None, entry=None, **kwargs):
         raise
 
     a_exit = None
-
-    try:
-        # Wait to make sure agent doesn't die immediately
-        a_exit = agent.wait(timeout=5)
-        remote.kill()
-    except requests.exceptions.RequestException:
-        pass
-
     r_exit = None
-    try:
-        r_exit = remote.wait()
-    except KeyboardInterrupt:
-        remote.kill()
-    try:
-        a_exit = agent.wait(timeout=5)
-    except requests.exceptions.RequestException:
-        agent.kill()
 
-    logs = {
-        'remote': (r_exit, remote.logs(stdout=True), remote.logs(stderr=True)),
-        'agent': (a_exit, agent.logs(stdout=True), agent.logs(stderr=True))
-    }
+    try:
+        while True:
+            try:
+                a_exit = agent.wait(timeout=5)
+                break
+            except requests.exceptions.RequestException:
+                pass
+            try:
+                r_exit = remote.wait(timeout=5)
+                break
+            except requests.exceptions.RequestException:
+                pass
 
-    remote.remove()
-    agent.remove()
-    bridge.remove()
-    if 'resultsdir' in kwargs:
-        with open(os.path.join(results, 'remote-stdout.txt'), 'w') as f:
-            f.write(logs['remote'][1].decode('utf-8'))
-        with open(os.path.join(results, 'remote-stderr.txt'), 'w') as f:
-            f.write(logs['remote'][2].decode('utf-8'))
-        with open(os.path.join(results, 'agent-stdout.txt'), 'w') as f:
-            f.write(logs['agent'][1].decode('utf-8'))
-        with open(os.path.join(results, 'agent-stderr.txt'), 'w') as f:
-            f.write(logs['agent'][2].decode('utf-8'))
+        if a_exit is None:
+            try:
+                a_exit = agent.wait(timeout=1)
+            except requests.exceptions.RequestException:
+                agent.kill()
+        if r_exit is None:
+            try:
+                r_exit = remote.wait(timeout=1)
+            except requests.exceptions.RequestException:
+                remote.kill()
+    except:
+        if a_exit is None:
+            try:
+                a_exit = agent.wait(timeout=0.2)
+            except:
+                agent.kill()
+        if r_exit is None:
+            try:
+                r_exit = remote.wait(timeout=0.2)
+            except:
+                remote.kill()
+        raise
+    finally:
+        logs = {
+            'remote': (r_exit, remote.logs(stdout=True), remote.logs(stderr=True)),
+            'agent': (a_exit, agent.logs(stdout=True), agent.logs(stderr=True))
+        }
+
+        if 'resultsdir' in kwargs:
+            with open(os.path.join(results, 'remote-stdout.txt'), 'w') as f:
+                f.write(logs['remote'][1].decode('utf-8'))
+            with open(os.path.join(results, 'remote-stderr.txt'), 'w') as f:
+                f.write(logs['remote'][2].decode('utf-8'))
+            with open(os.path.join(results, 'agent-stdout.txt'), 'w') as f:
+                f.write(logs['agent'][1].decode('utf-8'))
+            with open(os.path.join(results, 'agent-stderr.txt'), 'w') as f:
+                f.write(logs['agent'][2].decode('utf-8'))
+
+        remote.remove()
+        agent.remove()
+        bridge.remove()
+
     return logs
 
 
