@@ -78,17 +78,27 @@ def run(game, state=None, entry=None, **kwargs):
             try:
                 a_exit = agent.wait(timeout=0.2)
             except:
-                agent.kill()
+                try:
+                    agent.kill()
+                except docker.errors.APIError:
+                    pass
         if r_exit is None:
             try:
                 r_exit = remote.wait(timeout=0.2)
             except:
-                remote.kill()
+                try:
+                    remote.kill()
+                except docker.errors.APIError:
+                    pass
         raise
     finally:
+        if isinstance(a_exit, dict):
+            a_exit = a_exit.get('StatusCode')
+        if isinstance(r_exit, dict):
+            r_exit = r_exit.get('StatusCode')
         logs = {
-            'remote': (r_exit, remote.logs(stdout=True), remote.logs(stderr=True)),
-            'agent': (a_exit, agent.logs(stdout=True), agent.logs(stderr=True))
+            'remote': (r_exit, remote.logs(stdout=True, stderr=False), remote.logs(stdout=False, stderr=True)),
+            'agent': (a_exit, agent.logs(stdout=True, stderr=False), agent.logs(stdout=False, stderr=True))
         }
 
         if 'resultsdir' in kwargs:
@@ -123,9 +133,9 @@ def run_args(args):
     results = run(args.game, args.state, args.entry, **kwargs)
     if results['remote'][0] or results['agent'][0]:
         if results['remote'][0]:
-            print('Remote exited uncleanly')
+            print('Remote exited uncleanly:', results['remote'][0])
         if results['agent'][0]:
-            print('Agent exited uncleanly')
+            print('Agent exited uncleanly', results['agent'][0])
         sys.exit(1)
 
 
