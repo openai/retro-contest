@@ -14,7 +14,7 @@ RUN apt-get update && \
 # Set up competition-specific layers
 COPY support /tmp/support
 RUN . ~/venv/bin/activate && \
-    pip install git+https://github.com/openai/gym.git@1ee888390ff29e850f8cc468678d5fdbff654087 && \
+    pip install gym>=0.9.6 && \
     pip install /tmp/support && \
     rm -r ~/.cache
 
