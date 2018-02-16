@@ -12,7 +12,7 @@ def make(socketdir='tmp/sock'):
     return env
 
 
-def run(agent=None, socketdir='tmp/sock', daemonize=False, *args):
+def run(agent=None, socketdir='tmp/sock', daemonize=False, args=[]):
     if daemonize:
         pid = os.fork()
         if pid > 0:
@@ -25,12 +25,12 @@ def run(agent=None, socketdir='tmp/sock', daemonize=False, *args):
         agent = entrypoint.load(False)
     env = make(socketdir)
     try:
-        agent(env)
+        agent(env, *args)
     except gre.GymRemoteError:
         pass
 
 
-def random_agent(env):
+def random_agent(env, *args):
     env.reset()
     while True:
         action = env.action_space.sample()
@@ -46,7 +46,7 @@ def main(argv=sys.argv[1:]):
     parser.add_argument('args', nargs='*', help='Optional arguments to the agent')
 
     args = parser.parse_args(argv)
-    run(agent=args.entry, daemonize=args.daemonize, *args.args)
+    run(agent=args.entry, daemonize=args.daemonize, args=args.args)
 
 
 if __name__ == '__main__':
