@@ -19,10 +19,14 @@ def run(agent=None, socketdir='tmp/sock', daemonize=False, args=[]):
             return
 
     if agent is None:
+        print('Running agent: random_agent')
         agent = random_agent
     elif not callable(agent):
+        print('Running agent: %s' % agent)
         entrypoint = EntryPoint.parse('entry=' + agent)
         agent = entrypoint.load(False)
+    else:
+        print('Running agent: %r' % agent)
     env = make(socketdir)
     try:
         agent(env, *args)
