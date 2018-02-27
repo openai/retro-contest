@@ -10,6 +10,7 @@ def run(game, state=None, entry=None, **kwargs):
     client = docker.from_env()
     remote_command = ['retro-challenge-remote', 'run', game, state, '-b', 'results/bk2', '-m', 'results']
     agent_command = []
+    agent_name = kwargs.get('agent', 'agent')
 
     if kwargs.get('wallclock_limit') is not None:
         remote_command.extend(['-W', str(kwargs['wallclock_limit'])])
@@ -39,7 +40,7 @@ def run(game, state=None, entry=None, **kwargs):
                                    **container_kwargs)
 
     try:
-        agent = client.containers.run('agent', agent_command,
+        agent = client.containers.run(agent_name, agent_command,
                                       volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'}},
                                       runtime=kwargs.get('runtime', 'nvidia'),
                                       **container_kwargs)
@@ -130,6 +131,9 @@ def run_args(args):
     if args.no_nv:
         kwargs['runtime'] = None
 
+    if args.agent:
+        kwargs['agent'] = args.agent
+
     results = run(args.game, args.state, args.entry, **kwargs)
     if results['remote'][0] or results['agent'][0]:
         if results['remote'][0]:
@@ -145,6 +149,7 @@ def init_parser(parser):
     parser.add_argument('state', type=str, default=None, nargs='?', help='Name of initial state')
     parser.add_argument('--entry', '-e', type=str, help='Name of agent entry point')
     parser.add_argument('--args', '-A', type=str, nargs='+', help='Extra agent entry arguments')
+    parser.add_argument('--agent', '-a', type=str, help='Extra agent Docker image')
     parser.add_argument('--wallclock-limit', '-W', type=float, default=None, help='Maximum time to run in seconds')
     parser.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
     parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
