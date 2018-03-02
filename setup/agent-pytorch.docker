@@ -1,4 +1,4 @@
-FROM agent:latest
+FROM quay.io/openai/retro-agent
 
 RUN . ~/venv/bin/activate && \
     pip install http://download.pytorch.org/whl/cu90/torch-0.3.1-cp35-cp35m-linux_x86_64.whl && \

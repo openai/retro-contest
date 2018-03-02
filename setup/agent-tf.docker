@@ -1,4 +1,4 @@
-FROM agent:latest
+FROM quay.io/openai/retro-agent
 
 RUN . ~/venv/bin/activate && \
     pip install tensorflow-gpu==1.5 && \

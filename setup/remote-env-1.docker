@@ -1,4 +1,4 @@
-FROM remote-env:bare
+FROM quay.io/openai/retro-env
 
 # Set up ROMs
 COPY roms /root/roms
