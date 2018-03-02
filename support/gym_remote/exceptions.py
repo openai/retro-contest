@@ -8,7 +8,10 @@ class GymRemoteErrorMeta(type):
     def __new__(cls, name, bases, dictionary):
         dictionary['ID'] = cls.ID_MAX
         cls.ID_MAX += 1
-        bases = (*bases, GymRemoteError)
+        try:
+            bases = (*bases, GymRemoteError)
+        except NameError:
+            assert name == 'GymRemoteError'
         newcls = super(GymRemoteErrorMeta, cls).__new__(cls, name, bases, dictionary)
         cls.ID_LIST.append(newcls)
         return newcls
@@ -18,7 +21,7 @@ class GymRemoteErrorMeta(type):
         return cls.ID_LIST[id](*args, **kwargs)
 
 
-class GymRemoteError(RuntimeError):
+class GymRemoteError(RuntimeError, metaclass=GymRemoteErrorMeta):
     pass
 
 
@@ -35,6 +38,10 @@ class ClientDisconnectError(gr.Bridge.Closed, metaclass=GymRemoteErrorMeta):
 
 
 class ServerDisconnectError(gr.Bridge.Closed, metaclass=GymRemoteErrorMeta):
+    pass
+
+
+class ResetError(metaclass=GymRemoteErrorMeta):
     pass
 
 

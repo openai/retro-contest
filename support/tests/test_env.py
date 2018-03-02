@@ -95,6 +95,25 @@ def test_reset(process_wrapper):
     assert env.step(0) == (0, 3, True, {})
 
 
+def test_reset_exception(process_wrapper):
+    env = process_wrapper(StepEnv, ignore_reset=True)
+
+    assert env.step(0) == (0, 1, False, {})
+    assert env.step(0) == (0, 2, False, {})
+    assert env.step(1) == (0, 3, True, {})
+    assert env.reset() == 0
+    assert env.step(0) == (0, 1, False, {})
+    assert env.step(0) == (0, 2, False, {})
+    assert env.step(1) == (0, 3, True, {})
+    try:
+        assert env.step(0) == (0, 3, True, {})
+    except gre.ResetError:
+        return
+    except:
+        assert False, 'Incorrect exception'
+    assert False, 'No exception'
+
+
 def test_ts_limit(process_wrapper):
     env = process_wrapper(StepEnv, timestep_limit=5)
 

@@ -28,7 +28,7 @@ def run(game, state,
             return
 
     env = make(game, state, bk2dir, monitordir, discrete_actions, socketdir)
-    env.serve(timestep_limit=timestep_limit, wallclock_limit=wallclock_limit)
+    env.serve(timestep_limit=timestep_limit, wallclock_limit=wallclock_limit, ingore_reset=True)
 
 
 def run_args(args):

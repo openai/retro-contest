@@ -374,3 +374,36 @@ def test_bridge_server_buffered_clean(tempdir):
 
     assert not os.path.exists(os.path.join(tempdir, 'sock'))
     assert not os.path.exists(os.path.join(tempdir, 'np'))
+
+
+def test_bridge_exception_server(tempdir):
+    client, server = setup_client_server(tempdir)
+
+    start_bridge(client, server)
+
+    server.send()
+    client.recv()
+
+    server.exception(gr.exceptions.GymRemoteError)
+    try:
+        client.recv()
+        assert False, 'No exception'
+    except gr.exceptions.GymRemoteError:
+        pass
+
+
+def test_bridge_exception_client(tempdir):
+    client, server = setup_client_server(tempdir)
+
+    start_bridge(client, server)
+
+    server.send()
+    client.recv()
+
+    client.exception(gr.exceptions.GymRemoteError)
+    try:
+        client.send()
+        server.recv()
+        assert False, 'No exception'
+    except gr.exceptions.GymRemoteError:
+        pass

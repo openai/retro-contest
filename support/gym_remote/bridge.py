@@ -160,12 +160,17 @@ class Bridge:
                 exception = self.Closed(message['reason'])
             raise exception
 
+        def exception(message):
+            import gym_remote.exceptions as gre
+            raise gre.make(message['exception'], message['reason'])
+
         self._channels = {}
         self.connection = None
         self._buffer = []
         self._message_handlers = {
             'update': self.update_vars,
-            'close': close
+            'close': close,
+            'exception': exception
         }
 
     def __del__(self):
@@ -262,6 +267,18 @@ class Bridge:
             channel.set_base(os.path.join(self.base, name))
         return dict(self._channels)
 
+    def _try_send(self, type, content):
+        try:
+            self._send_message(type, content)
+        except self.Closed as e:
+            try:
+                while True:
+                    self.recv()
+            except self.Closed as f:
+                e = f
+            self.close()
+            raise e
+
     def _send_message(self, type, content):
         if not self.connection:
             raise self.Closed
@@ -297,16 +314,7 @@ class Bridge:
         for name, channel in self._channels.items():
             if channel.dirty:
                 content[name] = channel.serialize()
-        try:
-            self._send_message('update', content)
-        except self.Closed as e:
-            try:
-                while True:
-                    self.recv()
-            except self.Closed as f:
-                e = f
-            self.close()
-            raise e
+        self._try_send('update', content)
 
     def recv(self):
         message = self._recv_message()
@@ -339,6 +347,10 @@ class Bridge:
                     pass
         self.connection = None
         self.sock = None
+
+    def exception(self, exception, reason=None):
+        content = {'reason': reason, 'exception': exception.ID}
+        self._try_send('exception', content)
 
     def settimeout(self, timeout):
         self.sock.settimeout(timeout)

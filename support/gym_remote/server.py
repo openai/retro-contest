@@ -16,7 +16,7 @@ class RemoteEnvWrapper(gym.Wrapper):
         self.ch_reset = self.bridge.add_channel('reset', BoolChannel())
         self.bridge.listen()
 
-    def serve(self, timestep_limit=None, wallclock_limit=None):
+    def serve(self, timestep_limit=None, wallclock_limit=None, ignore_reset=False):
         if wallclock_limit is not None:
             end = time.time() + wallclock_limit
             self.bridge.settimeout(wallclock_limit)
@@ -28,6 +28,8 @@ class RemoteEnvWrapper(gym.Wrapper):
             self.bridge.server_accept()
         except Bridge.Timeout:
             return ts
+
+        done = False
 
         while timestep_limit is None or ts < timestep_limit:
             if wallclock_limit:
@@ -46,11 +48,20 @@ class RemoteEnvWrapper(gym.Wrapper):
                 break
 
             if self.ch_reset.value:
+                if ignore_reset and not done:
+                    self.bridge.exception(gre.ResetError)
+                    self.bridge.send()
+                    continue
                 self.ch_ob.value = self.env.reset()
                 self.ch_reset.value = False
                 self.ch_reward.value = 0
                 self.ch_done.value = False
+                done = False
             else:
+                if ignore_reset and done:
+                    self.bridge.exception(gre.ResetError)
+                    self.bridge.send()
+                    continue
                 ob, rew, done, _ = self.env.step(self.ch_ac.value)
                 self.ch_ob.value = ob
                 self.ch_reward.value = rew
