@@ -97,6 +97,10 @@ def show_args(args, server, cookies):
             for worker in job['workers']:
                 print('- Task:', worker['task'])
                 print('  Status:', worker['state'])
+                if 'eta' in worker:
+                    print('  ETA (seconds):', worker['eta'])
+                if 'progress' in worker:
+                    print('  Progress (percent):', worker['progress'] * 100)
                 if 'error' in worker:
                     print('  Error:', worker['error'])
         else:
