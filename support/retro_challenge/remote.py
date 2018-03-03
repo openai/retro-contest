@@ -11,7 +11,7 @@ import sys
 def make(game, state, bk2dir=None, monitordir=None, discrete_actions=False, socketdir='tmp/sock'):
     if bk2dir:
         os.makedirs(bk2dir, exist_ok=True)
-    env = retro_challenge.local.make(game, state, discrete_actions=discrete_actions)
+    env = retro_challenge.local.make(game, state, discrete_actions=discrete_actions, bk2dir=bk2dir)
     if monitordir:
         env = retro_challenge.Monitor(env, os.path.join(monitordir, 'monitor.csv'), os.path.join(monitordir, 'log.csv'))
     env = grs.RemoteEnvWrapper(env, socketdir)
