@@ -84,6 +84,7 @@ def test_multibinary_split(process_wrapper):
 def test_reset(process_wrapper):
     env = process_wrapper(StepEnv)
 
+    assert env.reset() == 0
     assert env.step(0) == (0, 1, False, {})
     assert env.step(0) == (0, 2, False, {})
     assert env.step(1) == (0, 3, True, {})
@@ -98,6 +99,7 @@ def test_reset(process_wrapper):
 def test_reset_exception(process_wrapper):
     env = process_wrapper(StepEnv, ignore_reset=True)
 
+    assert env.reset() == 0
     assert env.step(0) == (0, 1, False, {})
     assert env.step(0) == (0, 2, False, {})
     assert env.step(1) == (0, 3, True, {})

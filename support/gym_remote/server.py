@@ -29,7 +29,7 @@ class RemoteEnvWrapper(gym.Wrapper):
         except Bridge.Timeout:
             return ts
 
-        done = False
+        done = True
 
         while timestep_limit is None or ts < timestep_limit:
             if wallclock_limit:
