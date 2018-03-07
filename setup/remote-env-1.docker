@@ -1,4 +1,4 @@
-FROM quay.io/openai/retro-env
+FROM openai/retro-env
 
 # Set up ROMs
 COPY roms /root/roms
