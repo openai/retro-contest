@@ -4,6 +4,30 @@ import os
 import random
 import requests.exceptions
 import sys
+import threading
+
+
+class LogThread:
+    def __init__(self, container):
+        self._log = container.logs(stdout=True, stderr=True, stream=True)
+        self._thread = threading.Thread(target=self._run)
+        self._active = False
+
+    def start(self):
+        if self._active:
+            return
+        self._active = True
+        self._thread.start()
+
+    def exit(self):
+        self._active = False
+
+    def _run(self):
+        while self._active:
+            try:
+                print(next(self._log).decode('utf-8'), end='')
+            except StopIteration:
+                break
 
 
 def run(game, state=None, entry=None, **kwargs):
@@ -51,6 +75,10 @@ def run(game, state=None, entry=None, **kwargs):
     a_exit = None
     r_exit = None
 
+    if not kwargs.get('quiet'):
+        log_thread = LogThread(agent)
+        log_thread.start()
+
     try:
         while True:
             try:
@@ -97,6 +125,10 @@ def run(game, state=None, entry=None, **kwargs):
             a_exit = a_exit.get('StatusCode')
         if isinstance(r_exit, dict):
             r_exit = r_exit.get('StatusCode')
+
+        if not kwargs.get('quiet'):
+            log_thread.exit()
+
         logs = {
             'remote': (r_exit, remote.logs(stdout=True, stderr=False), remote.logs(stdout=False, stderr=True)),
             'agent': (a_exit, agent.logs(stdout=True, stderr=False), agent.logs(stdout=False, stderr=True))
@@ -126,6 +158,7 @@ def run_args(args):
         'timestep_limit': args.timestep_limit,
         'discrete_actions': args.discrete_actions,
         'resultsdir': args.results_dir,
+        'quiet': args.quiet,
     }
 
     if args.no_nv:
@@ -155,6 +188,7 @@ def init_parser(parser):
     parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
     parser.add_argument('--results-dir', '-r', type=str, help='Path to output results')
     parser.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
+    parser.add_argument('--quiet', '-q', action='store_true', help='Disable printing agent logs')
 
 
 def main(argv=sys.argv[1:]):
