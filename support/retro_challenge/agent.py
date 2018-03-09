@@ -38,7 +38,10 @@ def random_agent(env, *args):
     env.reset()
     while True:
         action = env.action_space.sample()
-        ob, reward, done, _ = env.step(action)
+        try:
+            ob, reward, done, _ = env.step(action)
+        except gre.ResetError:
+            done = True
         if done:
             env.reset()
 
