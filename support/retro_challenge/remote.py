@@ -66,13 +66,15 @@ def list_states(args):
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Run support code for Retro Challenge remote environment')
     parser.set_defaults(func=lambda args: parser.print_help())
+    parser.add_argument('--data-dir', type=str, help='Use a custom data directory (must be named `data`)')
+
     subparsers = parser.add_subparsers()
     parser_run = subparsers.add_parser('run', description='Run Remote environment')
     parser_list = subparsers.add_parser('list', description='List information about environments')
 
     parser_run.set_defaults(func=run_args)
     parser_run.add_argument('game', type=str, help='Name of the game to run')
-    parser_run.add_argument('state', type=str, default=None, nargs='?', help='Name of initial state')
+    parser_run.add_argument('state', type=str, default=retro.STATE_DEFAULT, nargs='?', help='Name of initial state')
     parser_run.add_argument('--monitordir', '-m', type=str, help='Directory to hold monitor files')
     parser_run.add_argument('--bk2dir', '-b', type=str, help='Directory to hold BK2 movies')
     parser_run.add_argument('--daemonize', '-d', action='store_true', default=False, help='Daemonize (background) the process')
@@ -91,6 +93,8 @@ def main(argv=sys.argv[1:]):
     parser_list_states.add_argument('game', type=str, default=None, nargs='*', help='List for specified games only')
 
     args = parser.parse_args(argv)
+    if args.data_dir:
+        retro.data_path(args.data_dir)
     args.func(args)
 
 

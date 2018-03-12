@@ -5,6 +5,11 @@ import random
 import requests.exceptions
 import sys
 import threading
+try:
+    from retro import data_path
+except ImportError:
+    def data_path():
+        raise RuntimeError('Could not find Gym Retro data directory')
 
 
 class LogThread:
@@ -32,9 +37,10 @@ class LogThread:
 
 def run(game, state=None, entry=None, **kwargs):
     client = docker.from_env()
-    remote_command = ['retro-challenge-remote', 'run', game, state, '-b', 'results/bk2', '-m', 'results']
+    remote_command = ['retro-challenge-remote', 'run', game, *([state] if state else []), '-b', 'results/bk2', '-m', 'results']
     agent_command = []
     agent_name = kwargs.get('agent', 'agent')
+    datamount = {}
 
     if kwargs.get('wallclock_limit') is not None:
         remote_command.extend(['-W', str(kwargs['wallclock_limit'])])
@@ -58,9 +64,14 @@ def run(game, state=None, entry=None, **kwargs):
 
     rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
     bridge = client.volumes.create('compo-tmp-vol-%s' % rand, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
+    if kwargs.get('data_dir'):
+        remote_command = [remote_command[0], '--data-dir', '/root/data', *remote_command[1:]]
+        datamount = {kwargs['data_dir']: {'bind': '/root/data', 'mode': 'ro'}}
+
     remote = client.containers.run('remote-env', remote_command,
                                    volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
-                                            results: {'bind': '/root/compo/results'}},
+                                            results: {'bind': '/root/compo/results'},
+                                            **datamount},
                                    **container_kwargs)
 
     try:
@@ -159,6 +170,7 @@ def run_args(args):
         'discrete_actions': args.discrete_actions,
         'resultsdir': args.results_dir,
         'quiet': args.quiet,
+        'data_dir': args.data_dir if args.data_dir is not None else data_path()
     }
 
     if args.no_nv:
@@ -188,6 +200,7 @@ def init_parser(parser):
     parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
     parser.add_argument('--results-dir', '-r', type=str, help='Path to output results')
     parser.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
+    parser.add_argument('--data-dir', '-d', type=str, default=False, nargs='?', help='Use a data directory (default: retro.data_path())')
     parser.add_argument('--quiet', '-q', action='store_true', help='Disable printing agent logs')
 
 
