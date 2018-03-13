@@ -47,7 +47,7 @@ def random_agent(env, *args):
 
 
 def main(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='Run support code for Retro Challenge remote environment')
+    parser = argparse.ArgumentParser(description='Run support code for OpenAI Retro Contest remote environment')
     parser.add_argument('--daemonize', '-d', action='store_true', default=False, help='Daemonize (background) the process')
     parser.add_argument('entry', type=str, nargs='?', help='Entry point to create an agent')
     parser.add_argument('args', nargs='*', help='Optional arguments to the agent')

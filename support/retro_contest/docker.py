@@ -37,7 +37,7 @@ class LogThread:
 
 def run(game, state=None, entry=None, **kwargs):
     client = docker.from_env()
-    remote_command = ['retro-challenge-remote', 'run', game, *([state] if state else []), '-b', 'results/bk2', '-m', 'results']
+    remote_command = ['retro-contest-remote', 'run', game, *([state] if state else []), '-b', 'results/bk2', '-m', 'results']
     agent_command = []
     agent_name = kwargs.get('agent', 'agent')
     datamount = {}
@@ -205,7 +205,7 @@ def init_parser(parser):
 
 
 def main(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='Run Retro Challenge support code')
+    parser = argparse.ArgumentParser(description='Run OpenAI Retro Contest support code')
     init_parser(parser)
     args = parser.parse_args(argv)
     args.func(args)

@@ -1,5 +1,5 @@
 import retro
-import retro_challenge
+import retro_contest
 import gym
 
 
@@ -10,6 +10,6 @@ def make(game, state, discrete_actions=False, bk2dir=None):
     env = retro.make(game, state, scenario='contest', use_restricted_actions=use_restricted_actions)
     if bk2dir:
         env.auto_record(bk2dir)
-    env = retro_challenge.StochasticFrameSkip(env, n=4, stickprob=0.25)
+    env = retro_contest.StochasticFrameSkip(env, n=4, stickprob=0.25)
     env = gym.wrappers.TimeLimit(env, max_episode_steps=4500)
     return env

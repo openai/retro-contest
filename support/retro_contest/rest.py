@@ -23,14 +23,14 @@ def clear_config(key):
 def write_config():
     os.makedirs(os.path.join(os.environ['HOME'], '.config'), exist_ok=True)
     c = yaml.dump(config, default_flow_style=False)
-    with open(os.path.join(os.environ['HOME'], '.config/retro-challenge.yml'), 'w') as f:
+    with open(os.path.join(os.environ['HOME'], '.config/retro-contest.yml'), 'w') as f:
         f.write(c)
 
 
 def load_config():
     global config
     try:
-        with open(os.path.join(os.environ['HOME'], '.config/retro-challenge.yml')) as f:
+        with open(os.path.join(os.environ['HOME'], '.config/retro-contest.yml')) as f:
             config = yaml.safe_load(f)
     except FileNotFoundError:
         pass

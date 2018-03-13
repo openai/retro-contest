@@ -24,4 +24,4 @@ COPY setup/bash_profile /root/.bash_profile
 VOLUME /root/compo/tmp
 WORKDIR /root/compo
 ENTRYPOINT ["bash", "-lc", "exec $0 $@"]
-CMD retro-challenge-agent
+CMD retro-contest-agent

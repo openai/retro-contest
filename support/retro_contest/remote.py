@@ -3,17 +3,17 @@ import gym
 import gym_remote.server as grs
 import os
 import retro
-import retro_challenge
-import retro_challenge.local
+import retro_contest
+import retro_contest.local
 import sys
 
 
 def make(game, state, bk2dir=None, monitordir=None, discrete_actions=False, socketdir='tmp/sock'):
     if bk2dir:
         os.makedirs(bk2dir, exist_ok=True)
-    env = retro_challenge.local.make(game, state, discrete_actions=discrete_actions, bk2dir=bk2dir)
+    env = retro_contest.local.make(game, state, discrete_actions=discrete_actions, bk2dir=bk2dir)
     if monitordir:
-        env = retro_challenge.Monitor(env, os.path.join(monitordir, 'monitor.csv'), os.path.join(monitordir, 'log.csv'))
+        env = retro_contest.Monitor(env, os.path.join(monitordir, 'monitor.csv'), os.path.join(monitordir, 'log.csv'))
     env = grs.RemoteEnvWrapper(env, socketdir)
     return env
 
@@ -64,7 +64,7 @@ def list_states(args):
 
 
 def main(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='Run support code for Retro Challenge remote environment')
+    parser = argparse.ArgumentParser(description='Run support code for OpenAI Retro Contest remote environment')
     parser.set_defaults(func=lambda args: parser.print_help())
     parser.add_argument('--data-dir', type=str, help='Use a custom data directory (must be named `data`)')
 

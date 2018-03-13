@@ -27,7 +27,7 @@ else:
 
 
 setup(
-    name='retro-challenge-support',
+    name='retro-contest-support',
     version=open(VERSION_PATH, 'r').read(),
     license='MIT',
     install_requires=[
@@ -40,12 +40,12 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'retro-challenge-remote=retro_challenge.remote:main [retro]',
-            'retro-challenge-agent=retro_challenge.agent:main',
-            'retro-challenge=retro_challenge.__main__:main'
+            'retro-contest-remote=retro_contest.remote:main [retro]',
+            'retro-contest-agent=retro_contest.agent:main',
+            'retro-contest=retro_contest.__main__:main'
         ]
     },
-    packages=['gym_remote', 'retro_challenge'],
+    packages=['gym_remote', 'retro_contest'],
     setup_requires=['pytest-runner'],
     use_scm_version=use_scm_version,
     zip_safe=True
