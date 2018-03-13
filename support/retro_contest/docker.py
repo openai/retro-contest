@@ -64,9 +64,9 @@ def run(game, state=None, entry=None, **kwargs):
 
     rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
     bridge = client.volumes.create('compo-tmp-vol-%s' % rand, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
-    if kwargs.get('data_dir'):
+    if kwargs.get('use_host_data'):
         remote_command = [remote_command[0], '--data-dir', '/root/data', *remote_command[1:]]
-        datamount = {kwargs['data_dir']: {'bind': '/root/data', 'mode': 'ro'}}
+        datamount = {data_path(): {'bind': '/root/data', 'mode': 'ro'}}
 
     remote = client.containers.run('remote-env', remote_command,
                                    volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
@@ -170,7 +170,7 @@ def run_args(args):
         'discrete_actions': args.discrete_actions,
         'resultsdir': args.results_dir,
         'quiet': args.quiet,
-        'data_dir': args.data_dir if args.data_dir is not None else data_path()
+        'use_host_data': args.use_host_data,
     }
 
     if args.no_nv:
@@ -200,7 +200,7 @@ def init_parser(parser):
     parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
     parser.add_argument('--results-dir', '-r', type=str, help='Path to output results')
     parser.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
-    parser.add_argument('--data-dir', '-d', type=str, default=False, nargs='?', help='Use a data directory (default: retro.data_path())')
+    parser.add_argument('--use-host-data', '-d', action='store_true', help='Use the host Gym Retro data directory')
     parser.add_argument('--quiet', '-q', action='store_true', help='Disable printing agent logs')
 
 
