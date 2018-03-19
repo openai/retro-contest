@@ -6,6 +6,7 @@ import os
 import requests
 import yaml
 from functools import wraps
+from requests.auth import HTTPBasicAuth
 
 config = {}
 
@@ -89,6 +90,43 @@ def docker_login_args(args, server, cookies):
     client = docker.from_env()
     client.login(cr['username'], cr['password'], registry=cr['url'])
     print('Logged in')
+
+
+@needs_login
+def docker_show_args(args, server, cookies):
+    r = requests.get(server + '/rest/user', cookies=cookies)
+    if r.status_code != 200 or 'cr' not in r.json():
+        print('Failed to obtain container registry')
+    cr = r.json()['cr']
+    print('Registry URL:', cr['url'])
+    print('Username:', cr['username'])
+    if args.show_password:
+        print('Password:', cr['password'])
+
+
+@needs_login
+def docker_list_args(args, server, cookies):
+    r = requests.get(server + '/rest/user', cookies=cookies)
+    if r.status_code != 200 or 'cr' not in r.json():
+        print('Failed to obtain container registry')
+    cr = r.json()['cr']
+    auth = HTTPBasicAuth(cr['username'], cr['password'])
+    r = requests.get('https://%s/v2/_catalog' % cr['url'], auth=auth)
+    repos = r.json()['repositories']
+    everything = {}
+    for repo in repos:
+        r = requests.get('https://%s/v2/%s/tags/list' % (cr['url'], repo), auth=auth)
+        if r.status_code != 200:
+            continue
+        try:
+            info = r.json()
+            everything[repo] = info.get('tags')
+        except:
+            pass
+    for k, v in everything.items():
+        print(k + ':')
+        for tag in v:
+            print('  ' + tag)
 
 
 @needs_login
@@ -218,6 +256,13 @@ def init_parsers(subparsers):
 
     parser_docker_login = subparsers_docker.add_parser('login', description='Log into user Docker registry')
     parser_docker_login.set_defaults(func=docker_login_args)
+
+    parser_docker_show = subparsers_docker.add_parser('show', description='Show information about user Docker registry')
+    parser_docker_show.set_defaults(func=docker_show_args)
+    parser_docker_show.add_argument('-p', '--show-password', action='store_true', help='Show login password')
+
+    parser_docker_list = subparsers_docker.add_parser('list', description='List contents of Docker registry')
+    parser_docker_list.set_defaults(func=docker_list_args)
 
     parser_job = subparsers.add_parser('job', description='Operations on jobs')
     parser_job.set_defaults(func=lambda args: parser_job.print_help())
