@@ -81,6 +81,17 @@ def needs_login(f):
 
 
 @needs_login
+def docker_login_args(args, server, cookies):
+    r = requests.get(server + '/rest/user', cookies=cookies)
+    if r.status_code != 200 or 'cr' not in r.json():
+        print('Failed to obtain container registry')
+    cr = r.json()['cr']
+    client = docker.from_env()
+    client.login(cr['username'], cr['password'], registry=cr['url'])
+    print('Logged in')
+
+
+@needs_login
 def show_args(args, server, cookies):
     endpoint = server + '/rest/job/status'
     if args.id:
@@ -198,31 +209,34 @@ def init_parsers(subparsers):
     parser_login.add_argument('--password-stdin', action='store_true', help='Read password from stdin')
     parser_login.add_argument('--server', type=str, help='Server to log into')
 
-    parser_login = subparsers.add_parser('logout', description='Log out of server')
-    parser_login.set_defaults(func=logout_args)
+    parser_logout = subparsers.add_parser('logout', description='Log out of server')
+    parser_logout.set_defaults(func=logout_args)
+
+    parser_docker = subparsers.add_parser('docker', description='Docker support commands')
+    parser_docker.set_defaults(func=lambda args: parser_docker.print_help())
+    subparsers_docker = parser_docker.add_subparsers()
+
+    parser_docker_login = subparsers_docker.add_parser('login', description='Log into user Docker registry')
+    parser_docker_login.set_defaults(func=docker_login_args)
 
     parser_job = subparsers.add_parser('job', description='Operations on jobs')
     parser_job.set_defaults(func=lambda args: parser_job.print_help())
     subparsers_job = parser_job.add_subparsers()
 
     parser_job_show = subparsers_job.add_parser('show', description='Show current job, if it exists')
-    parser_job_show.set_defaults(func=lambda args: parser_job_show.print_help())
     parser_job_show.set_defaults(func=show_args)
     parser_job_show.add_argument('id', nargs='?', type=int, help='List a specific job ID')
     parser_job_show.add_argument('-v', '--verbose', action='store_true', help='Be more verbose')
 
     parser_job_kill = subparsers_job.add_parser('cancel', description='Cancel current job')
-    parser_job_kill.set_defaults(func=lambda args: parser_job_kill.print_help())
     parser_job_kill.set_defaults(func=kill_args)
     parser_job_kill.add_argument('-y', '--yes', action='store_true', help='Do not display confirmation')
 
     parser_job_restart = subparsers_job.add_parser('restart', description='Restart job')
-    parser_job_restart.set_defaults(func=lambda args: parser_job_restart.print_help())
     parser_job_restart.set_defaults(func=restart_args)
     parser_job_restart.add_argument('-y', '--yes', action='store_true', help='Do not display confirmation')
     parser_job_restart.add_argument('id', nargs='?', type=int, help='Job ID to restart (default: latest)')
 
     parser_job_submit = subparsers_job.add_parser('submit', description='Submit new job')
-    parser_job_submit.set_defaults(func=lambda args: parser_job_submit.print_help())
     parser_job_submit.set_defaults(func=submit_args)
     parser_job_submit.add_argument('-t', '--tag', type=str, help='Local tag to push')
