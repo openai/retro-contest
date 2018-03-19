@@ -114,13 +114,33 @@ def kill_args(args, server, cookies):
     if not args.yes:
         yn = input('Are you sure? [y/N] ')
         if yn.lower() not in ('y', 'yes'):
-            print('Not killed')
+            print('Not canceled')
             return
     r = requests.post(server + '/rest/job/kill', cookies=cookies)
     if r.status_code == 404:
         print('No job found')
     elif r.status_code // 100 == 2:
-        print('Killed')
+        print('Canceled')
+    else:
+        print('An error occurred')
+
+
+@needs_login
+def restart_args(args, server, cookies):
+    if not args.yes:
+        yn = input('Are you sure? [y/N] ')
+        if yn.lower() not in ('y', 'yes'):
+            print('Not restarted')
+            return
+    if args.id:
+        suffix = '/%d' % args.id
+    else:
+        suffix = ''
+    r = requests.post(server + '/rest/job/restart' + suffix, cookies=cookies)
+    if r.status_code == 404:
+        print('No job found')
+    elif r.status_code // 100 == 2:
+        print('Restarted')
     else:
         print('An error occurred')
 
@@ -191,10 +211,16 @@ def init_parsers(subparsers):
     parser_job_show.add_argument('id', nargs='?', type=int, help='List a specific job ID')
     parser_job_show.add_argument('-v', '--verbose', action='store_true', help='Be more verbose')
 
-    parser_job_kill = subparsers_job.add_parser('kill', description='Kill current job')
+    parser_job_kill = subparsers_job.add_parser('cancel', description='Cancel current job')
     parser_job_kill.set_defaults(func=lambda args: parser_job_kill.print_help())
     parser_job_kill.set_defaults(func=kill_args)
     parser_job_kill.add_argument('-y', '--yes', action='store_true', help='Do not display confirmation')
+
+    parser_job_restart = subparsers_job.add_parser('restart', description='Restart job')
+    parser_job_restart.set_defaults(func=lambda args: parser_job_restart.print_help())
+    parser_job_restart.set_defaults(func=restart_args)
+    parser_job_restart.add_argument('-y', '--yes', action='store_true', help='Do not display confirmation')
+    parser_job_restart.add_argument('id', nargs='?', type=int, help='Job ID to restart (default: latest)')
 
     parser_job_submit = subparsers_job.add_parser('submit', description='Submit new job')
     parser_job_submit.set_defaults(func=lambda args: parser_job_submit.print_help())
