@@ -142,6 +142,8 @@ def show_args(args, server, cookies):
         if args.verbose:
             print('ID:', job['id'])
             print('Status:', job['status'])
+            if 'score' in job:
+                print('Score:', job['score'])
             print('Workers:')
             for worker in job['workers']:
                 print('- Task:', worker['task'])
@@ -150,6 +152,8 @@ def show_args(args, server, cookies):
                     print('  ETA (seconds):', worker['eta'])
                 if 'progress' in worker:
                     print('  Progress (percent):', worker['progress'] * 100)
+                if 'score' in worker:
+                    print('  Score:', worker['score'])
                 if 'error' in worker:
                     print('  Error:', worker['error'])
         else:
