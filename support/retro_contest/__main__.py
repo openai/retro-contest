@@ -17,8 +17,7 @@ def main(argv=sys.argv[1:]):
     parser.set_defaults(func=lambda args: parser.print_help())
     subparsers = parser.add_subparsers()
     if docker_cmd:
-        parser_run = subparsers.add_parser('run', description='Run Docker containers locally')
-        docker_cmd.init_parser(parser_run)
+        docker_cmd.init_parser(subparsers)
     if rest_cmd:
         rest_cmd.init_parsers(subparsers)
 

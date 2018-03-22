@@ -1,9 +1,11 @@
 import argparse
 import docker
+import io
 import os
 import random
 import requests.exceptions
 import sys
+import tempfile
 import threading
 try:
     from retro import data_path
@@ -188,20 +190,84 @@ def run_args(args):
         sys.exit(1)
 
 
-def init_parser(parser):
-    parser.set_defaults(func=run_args)
-    parser.add_argument('game', type=str, help='Name of the game to run')
-    parser.add_argument('state', type=str, default=None, nargs='?', help='Name of initial state')
-    parser.add_argument('--entry', '-e', type=str, help='Name of agent entry point')
-    parser.add_argument('--args', '-A', type=str, nargs='+', help='Extra agent entry arguments')
-    parser.add_argument('--agent', '-a', type=str, help='Extra agent Docker image')
-    parser.add_argument('--wallclock-limit', '-W', type=float, default=None, help='Maximum time to run in seconds')
-    parser.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
-    parser.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
-    parser.add_argument('--results-dir', '-r', type=str, help='Path to output results')
-    parser.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
-    parser.add_argument('--use-host-data', '-d', action='store_true', help='Use the host Gym Retro data directory')
-    parser.add_argument('--quiet', '-q', action='store_true', help='Disable printing agent logs')
+def build(path, tag, install=None, pass_env=False):
+    from pkg_resources import EntryPoint
+    import tarfile
+    if install:
+        destination = 'module'
+    else:
+        destination = 'agent.py'
+    docker_file = ['FROM openai/retro-agent',
+                   'COPY context %s' % destination]
+
+    if not install:
+        docker_file.append('CMD ["python", "-u", "/root/compo/agent.py"]')
+    else:
+        docker_file.append('RUN . ~/venv/bin/activate && pip install -e module')
+        valid = not any(c in install for c in ' "\\')
+        if pass_env:
+            try:
+                EntryPoint.parse('entry=' + install)
+            except ValueError:
+                valid = False
+            if not valid:
+                raise ValueError('Invalid entry point')
+            docker_file.append('CMD ["retro-contest-agent", "%s"]' % install)
+        else:
+            if not valid:
+                raise ValueError('Invalid module name')
+            docker_file.append('CMD ["python", "-u", "-m", "%s"]' % install)
+
+    print('Creating Docker image...')
+    docker_file_full = io.BytesIO('\n'.join(docker_file).encode('utf-8'))
+    client = docker.from_env()
+    with tempfile.NamedTemporaryFile() as f:
+        tf = tarfile.open(mode='w:gz', fileobj=f)
+        docker_file_info = tarfile.TarInfo('Dockerfile')
+        docker_file_info.size = len(docker_file_full.getvalue())
+        tf.addfile(docker_file_info, docker_file_full)
+        tf.add(path, arcname='context', exclude=lambda fname: fname.endswith('/.git'))
+        tf.close()
+        f.seek(0)
+        client.images.build(fileobj=f, custom_context=True, tag=tag, gzip=True)
+    print('Done!')
+
+
+def build_args(args):
+    kwargs = {
+        'install': args.install,
+        'pass_env': args.pass_env,
+    }
+
+    try:
+        build(args.path, args.tag, **kwargs)
+    except docker.errors.BuildError as be:
+        print(*[log['stream'] for log in be.build_log if 'stream' in log])
+        raise
+
+
+def init_parser(subparsers):
+    parser_run = subparsers.add_parser('run', description='Run Docker containers locally')
+    parser_run.set_defaults(func=run_args)
+    parser_run.add_argument('game', type=str, help='Name of the game to run')
+    parser_run.add_argument('state', type=str, default=None, nargs='?', help='Name of initial state')
+    parser_run.add_argument('--entry', '-e', type=str, help='Name of agent entry point')
+    parser_run.add_argument('--args', '-A', type=str, nargs='+', help='Extra agent entry arguments')
+    parser_run.add_argument('--agent', '-a', type=str, help='Extra agent Docker image')
+    parser_run.add_argument('--wallclock-limit', '-W', type=float, default=None, help='Maximum time to run in seconds')
+    parser_run.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
+    parser_run.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
+    parser_run.add_argument('--results-dir', '-r', type=str, help='Path to output results')
+    parser_run.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
+    parser_run.add_argument('--use-host-data', '-d', action='store_true', help='Use the host Gym Retro data directory')
+    parser_run.add_argument('--quiet', '-q', action='store_true', help='Disable printing agent logs')
+
+    parser_build = subparsers.add_parser('build', description='Build agent Docker containers')
+    parser_build.set_defaults(func=build_args)
+    parser_build.add_argument('path', type=str, help='Path to a file or package')
+    parser_build.add_argument('--tag', '-t', required=True, type=str, help='Tag name for the built image')
+    parser_build.add_argument('--install', '-i', type=str, help='Install as a package and run specified module or entry point (if -e is specified)')
+    parser_build.add_argument('--pass-env', '-e', action='store_true', help='Pass preconfigured environment to entry point specified by -i')
 
 
 def main(argv=sys.argv[1:]):
