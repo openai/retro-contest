@@ -1,4 +1,5 @@
-FROM nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04
+ARG CUDA
+FROM nvidia/cuda:${CUDA}-runtime-ubuntu16.04
 
 # Set up dependency layers
 SHELL ["/bin/bash", "-c"]

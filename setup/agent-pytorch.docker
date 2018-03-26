@@ -1,6 +1,6 @@
-FROM openai/retro-agent:bare
+FROM openai/retro-agent:bare-cuda8
 
 RUN . ~/venv/bin/activate && \
-    pip install http://download.pytorch.org/whl/cu90/torch-0.3.1-cp35-cp35m-linux_x86_64.whl && \
+    pip install http://download.pytorch.org/whl/cu80/torch-0.3.1-cp35-cp35m-linux_x86_64.whl && \
     pip install torchvision && \
     rm -r ~/.cache

@@ -1,5 +1,7 @@
-FROM openai/retro-agent:bare
+ARG CUDA
+FROM openai/retro-agent:bare-cuda${CUDA}
 
+ARG TF
 RUN . ~/venv/bin/activate && \
-    pip install tensorflow-gpu==1.6 && \
+    pip install tensorflow-gpu==$TF && \
     rm -r ~/.cache
