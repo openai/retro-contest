@@ -12,7 +12,7 @@ docker build -f agent-tf.docker -t openai/retro-agent:tensorflow-1.7 --build-arg
 docker build -f agent-pytorch.docker -t openai/retro-agent:pytorch --cache-from openai/retro-agent:pytorch .. && \
 docker build -f remote-env-0.docker -t openai/retro-env --cache-from openai/retro-env .. && \
 docker build -f remote-env-1.docker -t remote-env ..
-docker tag openai/retro-agent:tensorflow-1.6 openai/retro-agent:tensorflow
+docker tag openai/retro-agent:tensorflow-1.7 openai/retro-agent:tensorflow
 docker tag openai/retro-agent:tensorflow openai/retro-agent:latest
 docker tag openai/retro-agent:latest agent
 docker tag openai/retro-env remote-env:bare
