@@ -37,6 +37,12 @@ class LogThread:
                 break
 
 
+def convert_path(path):
+    if sys.platform.startswith('win') and path[1] == ':':
+        path = '/%s%s' % (path[0], path[2:].replace('\\', '/'))
+    return path
+
+
 def run(game, state=None, entry=None, **kwargs):
     client = docker.from_env()
     remote_command = ['retro-contest-remote', 'run', game, *([state] if state else []), '-b', 'results/bk2', '-m', 'results']
@@ -62,13 +68,14 @@ def run(game, state=None, entry=None, **kwargs):
         results = kwargs.get('resultsvol', 'compo-results')
     os.makedirs(results, exist_ok=True)
 
+    results = convert_path(results)
     container_kwargs = {'detach': True, 'network_disabled': True}
 
     rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
     bridge = client.volumes.create('compo-tmp-vol-%s' % rand, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
     if kwargs.get('use_host_data'):
         remote_command = [remote_command[0], '--data-dir', '/root/data', *remote_command[1:]]
-        datamount = {data_path(): {'bind': '/root/data', 'mode': 'ro'}}
+        datamount = {convert_path(data_path()): {'bind': '/root/data', 'mode': 'ro'}}
 
     remote = client.containers.run('remote-env', remote_command,
                                    volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
