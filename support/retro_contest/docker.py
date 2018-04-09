@@ -39,7 +39,7 @@ class LogThread:
 
 def convert_path(path):
     if sys.platform.startswith('win') and path[1] == ':':
-        path = '/%s%s' % (path[0], path[2:].replace('\\', '/'))
+        path = '/%s%s' % (path[0].lower(), path[2:].replace('\\', '/'))
     return path
 
 
@@ -68,7 +68,6 @@ def run(game, state=None, entry=None, **kwargs):
         results = kwargs.get('resultsvol', 'compo-results')
     os.makedirs(results, exist_ok=True)
 
-    results = convert_path(results)
     container_kwargs = {'detach': True, 'network_disabled': True}
 
     rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
@@ -79,7 +78,7 @@ def run(game, state=None, entry=None, **kwargs):
 
     remote = client.containers.run('remote-env', remote_command,
                                    volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
-                                            results: {'bind': '/root/compo/results'},
+                                            convert_path(results): {'bind': '/root/compo/results'},
                                             **datamount},
                                    **container_kwargs)
 
