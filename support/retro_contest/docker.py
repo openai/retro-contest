@@ -76,7 +76,7 @@ def run(game, state=None, entry=None, **kwargs):
         remote_command = [remote_command[0], '--data-dir', '/root/data', *remote_command[1:]]
         datamount = {convert_path(data_path()): {'bind': '/root/data', 'mode': 'ro'}}
 
-    remote = client.containers.run('remote-env', remote_command,
+    remote = client.containers.run('openai/retro-env', remote_command,
                                    volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
                                             convert_path(results): {'bind': '/root/compo/results'},
                                             **datamount},
