@@ -1,3 +1,6 @@
+if [ ! -e /usr/lib/x86_64-linux-gnu/libcuda.so.1 ]; then
+	ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/lib/x86_64-linux-gnu/libcuda.so.1
+fi
 mkdir -p $HOME/compo/tmp/sock
 HOSTNAME=$(cat $HOME/hostname)
 source $HOME/venv/bin/activate
