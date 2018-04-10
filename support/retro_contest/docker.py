@@ -62,29 +62,31 @@ def run(game, state=None, entry=None, **kwargs):
         if kwargs.get('entry_args'):
             agent_command.extend(kwargs['entry_args'])
 
+    rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
+    volname = 'retro-contest-tmp%s' % rand
+    datamount = {}
     if kwargs.get('resultsdir'):
         results = os.path.realpath(kwargs['resultsdir'])
+        datamount[convert_path(results)] = {'bind': '/root/compo/results'}
+        os.makedirs(results, exist_ok=True)
     else:
-        results = kwargs.get('resultsvol', 'compo-results')
-    os.makedirs(results, exist_ok=True)
+        results = None
 
     container_kwargs = {'detach': True, 'network_disabled': True}
 
-    rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
-    bridge = client.volumes.create('compo-tmp-vol-%s' % rand, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
+    bridge = client.volumes.create(volname, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
     if kwargs.get('use_host_data'):
         remote_command = [remote_command[0], '--data-dir', '/root/data', *remote_command[1:]]
-        datamount = {convert_path(data_path()): {'bind': '/root/data', 'mode': 'ro'}}
+        datamount[convert_path(data_path())] = {'bind': '/root/data', 'mode': 'ro'}
 
     remote = client.containers.run('openai/retro-env', remote_command,
-                                   volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'},
-                                            convert_path(results): {'bind': '/root/compo/results'},
+                                   volumes={volname: {'bind': '/root/compo/tmp'},
                                             **datamount},
                                    **container_kwargs)
 
     try:
         agent = client.containers.run(agent_name, agent_command,
-                                      volumes={'compo-tmp-vol-%s' % rand: {'bind': '/root/compo/tmp'}},
+                                      volumes={volname: {'bind': '/root/compo/tmp'}},
                                       runtime=kwargs.get('runtime', 'nvidia'),
                                       **container_kwargs)
     except:
@@ -153,7 +155,7 @@ def run(game, state=None, entry=None, **kwargs):
             'agent': (a_exit, agent.logs(stdout=True, stderr=False), agent.logs(stdout=False, stderr=True))
         }
 
-        if 'resultsdir' in kwargs:
+        if results:
             with open(os.path.join(results, 'remote-stdout.txt'), 'w') as f:
                 f.write(logs['remote'][1].decode('utf-8'))
             with open(os.path.join(results, 'remote-stderr.txt'), 'w') as f:
