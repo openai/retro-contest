@@ -73,6 +73,11 @@ def run(game, state=None, entry=None, **kwargs):
         results = None
 
     container_kwargs = {'detach': True, 'network_disabled': True}
+    remote_kwargs = dict(container_kwargs)
+    agent_kwargs = dict(container_kwargs)
+
+    if kwargs.get('agent_shm'):
+        agent_kwargs['shm_size'] = kwargs['agent_shm']
 
     bridge = client.volumes.create(volname, driver='local', driver_opts={'type': 'tmpfs', 'device': 'tmpfs'})
     if kwargs.get('use_host_data'):
@@ -82,13 +87,13 @@ def run(game, state=None, entry=None, **kwargs):
     remote = client.containers.run('openai/retro-env', remote_command,
                                    volumes={volname: {'bind': '/root/compo/tmp'},
                                             **datamount},
-                                   **container_kwargs)
+                                   **remote_kwargs)
 
     try:
         agent = client.containers.run(agent_name, agent_command,
                                       volumes={volname: {'bind': '/root/compo/tmp'}},
                                       runtime=kwargs.get('runtime', 'nvidia'),
-                                      **container_kwargs)
+                                      **agent_kwargs)
     except:
         remote.kill()
         raise
@@ -181,6 +186,7 @@ def run_args(args):
         'resultsdir': args.results_dir,
         'quiet': args.quiet,
         'use_host_data': args.use_host_data,
+        'agent_shm': args.agent_shm,
     }
 
     if args.no_nv:
@@ -269,6 +275,7 @@ def init_parser(subparsers):
     parser_run.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
     parser_run.add_argument('--use-host-data', '-d', action='store_true', help='Use the host Gym Retro data directory')
     parser_run.add_argument('--quiet', '-q', action='store_true', help='Disable printing agent logs')
+    parser_run.add_argument('--agent-shm', type=str, help='Agent /dev/shm size')
 
     parser_build = subparsers.add_parser('build', description='Build agent Docker containers')
     parser_build.set_defaults(func=build_args)
