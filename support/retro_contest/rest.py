@@ -40,7 +40,7 @@ def load_config():
 def login(email, password, server=None):
     if not server:
         server = config.get('server')
-    if server and (not server.startswith('http://') or server.startswith('https://')):
+    if server and not (server.startswith('http://') or server.startswith('https://')):
         server = 'http://' + server
     r = requests.post(server + '/rest/login', json={'email': email, 'password': password})
     if r.status_code // 100 == 2:
