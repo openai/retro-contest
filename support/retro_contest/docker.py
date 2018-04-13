@@ -84,10 +84,14 @@ def run(game, state=None, entry=None, **kwargs):
         remote_command = [remote_command[0], '--data-dir', '/root/data', *remote_command[1:]]
         datamount[convert_path(data_path())] = {'bind': '/root/data', 'mode': 'ro'}
 
-    remote = client.containers.run('openai/retro-env', remote_command,
-                                   volumes={volname: {'bind': '/root/compo/tmp'},
-                                            **datamount},
-                                   **remote_kwargs)
+    try:
+        remote = client.containers.run('openai/retro-env', remote_command,
+                                       volumes={volname: {'bind': '/root/compo/tmp'},
+                                                **datamount},
+                                       **remote_kwargs)
+    except:
+        bridge.remove()
+        raise
 
     try:
         agent = client.containers.run(agent_name, agent_command,
@@ -96,6 +100,8 @@ def run(game, state=None, entry=None, **kwargs):
                                       **agent_kwargs)
     except:
         remote.kill()
+        remote.remove()
+        bridge.remove()
         raise
 
     a_exit = None
