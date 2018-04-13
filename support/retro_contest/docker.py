@@ -207,7 +207,8 @@ def run_args(args):
             print('Remote exited uncleanly:', results['remote'][0])
         if results['agent'][0]:
             print('Agent exited uncleanly', results['agent'][0])
-        sys.exit(1)
+        return False
+    return True
 
 
 def build(path, tag, install=None, pass_env=False):
@@ -264,6 +265,7 @@ def build_args(args):
     except docker.errors.BuildError as be:
         print(*[log['stream'] for log in be.build_log if 'stream' in log])
         raise
+    return True
 
 
 def init_parser(subparsers):
@@ -295,7 +297,8 @@ def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Run OpenAI Retro Contest support code')
     init_parser(parser)
     args = parser.parse_args(argv)
-    args.func(args)
+    if not args.func(args):
+        sys.exit(1)
 
 
 if __name__ == '__main__':

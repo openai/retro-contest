@@ -22,7 +22,8 @@ def main(argv=sys.argv[1:]):
         rest_cmd.init_parsers(subparsers)
 
     args = parser.parse_args(argv)
-    args.func(args)
+    if not args.func(args):
+        sys.exit(1)
 
 
 if __name__ == '__main__':

@@ -63,6 +63,8 @@ def login_args(args):
         print('Login succeeded')
     else:
         print('Login failed')
+        return False
+    return True
 
 
 def leaderboard_args(args):
@@ -78,11 +80,15 @@ def leaderboard_args(args):
             print('#%i:' % place)
             print('- User:', score['name'])
             print('- Score:', score['score'])
+    else:
+        return False
+    return True
 
 
 def logout_args(args):
     clear_config('cookies')
     print('Logged out')
+    return True
 
 
 def needs_login(f):
@@ -102,10 +108,12 @@ def docker_login_args(args, server, cookies):
     r = requests.get(server + '/rest/user', cookies=cookies)
     if r.status_code != 200 or 'cr' not in r.json():
         print('Failed to obtain container registry')
+        return False
     cr = r.json()['cr']
     client = docker.from_env()
     client.login(cr['username'], cr['password'], registry=cr['url'])
     print('Logged in')
+    return True
 
 
 @needs_login
@@ -113,11 +121,13 @@ def docker_show_args(args, server, cookies):
     r = requests.get(server + '/rest/user', cookies=cookies)
     if r.status_code != 200 or 'cr' not in r.json():
         print('Failed to obtain container registry')
+        return False
     cr = r.json()['cr']
     print('Registry URL:', cr['url'])
     print('Username:', cr['username'])
     if args.show_password:
         print('Password:', cr['password'])
+    return True
 
 
 @needs_login
@@ -125,6 +135,7 @@ def docker_list_args(args, server, cookies):
     r = requests.get(server + '/rest/user', cookies=cookies)
     if r.status_code != 200 or 'cr' not in r.json():
         print('Failed to obtain container registry')
+        return False
     cr = r.json()['cr']
     auth = HTTPBasicAuth(cr['username'], cr['password'])
     r = requests.get('https://%s/v2/_catalog' % cr['url'], auth=auth)
@@ -143,6 +154,7 @@ def docker_list_args(args, server, cookies):
         print(k + ':')
         for tag in v:
             print('  ' + tag)
+    return True
 
 
 @needs_login
@@ -155,6 +167,7 @@ def show_args(args, server, cookies):
     r = requests.get(endpoint, cookies=cookies)
     if r.status_code == 404:
         print('No job found')
+        return False
     elif r.status_code == 200:
         jobs = r.json()
         if not args.all:
@@ -181,7 +194,8 @@ def show_args(args, server, cookies):
                 print('%i: %s' % (job['id'], job['status']))
     else:
         print('Error %i occurred' % r.status_code)
-
+        return False
+    return True
 
 @needs_login
 def kill_args(args, server, cookies):
@@ -189,14 +203,17 @@ def kill_args(args, server, cookies):
         yn = input('Are you sure? [y/N] ')
         if yn.lower() not in ('y', 'yes'):
             print('Not canceled')
-            return
+            return True
     r = requests.post(server + '/rest/job/kill', cookies=cookies)
     if r.status_code == 404:
         print('No job found')
+        return False
     elif r.status_code // 100 == 2:
         print('Canceled')
     else:
-        print('An error occurred')
+        print('Error %i occurred' % r.status_code)
+        return False
+    return True
 
 
 @needs_login
@@ -205,7 +222,7 @@ def restart_args(args, server, cookies):
         yn = input('Are you sure? [y/N] ')
         if yn.lower() not in ('y', 'yes'):
             print('Not restarted')
-            return
+            return True
     if args.id:
         suffix = '/%d' % args.id
     else:
@@ -213,10 +230,13 @@ def restart_args(args, server, cookies):
     r = requests.post(server + '/rest/job/restart' + suffix, cookies=cookies)
     if r.status_code == 404:
         print('No job found')
+        return False
     elif r.status_code // 100 == 2:
         print('Restarted')
     else:
-        print('An error occurred')
+        print('Error %i occurred' % r.status_code)
+        return False
+    return True
 
 
 @needs_login
@@ -233,7 +253,7 @@ def submit_args(args, server, cookies):
         client.tag(tag, cr['registry'] + '/' + tag)
     except requests.exceptions.HTTPError:
         print('Could not find local tag')
-        return
+        return False
     print('Pushing container...')
     size = {}
     for line in client.push(cr['registry'] + '/' + tag, stream=True, auth_config=cr):
@@ -259,7 +279,9 @@ def submit_args(args, server, cookies):
     if r.status_code // 100 == 2:
         print('Done')
     else:
-        print('An error occurred')
+        print('Error %i occurred' % r.status_code)
+        return False
+    return True
 
 
 def init_parsers(subparsers):
