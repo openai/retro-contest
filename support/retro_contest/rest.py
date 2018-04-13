@@ -1,6 +1,7 @@
 import argparse
 import docker
 import getpass
+import itertools
 import json
 import os
 import requests
@@ -62,6 +63,21 @@ def login_args(args):
         print('Login succeeded')
     else:
         print('Login failed')
+
+
+def leaderboard_args(args):
+    server = config.get('server')
+    r = requests.get(server + '/rest/leaderboard')
+    if r.status_code // 100 == 2:
+        try:
+            info = r.json()
+            board = info.get('leaderboard')
+        except:
+            return
+        for place, score in zip(itertools.count(info.get('start', 1)), board):
+            print('#%i:' % place)
+            print('- User:', score['name'])
+            print('- Score:', score['score'])
 
 
 def logout_args(args):
@@ -132,34 +148,39 @@ def docker_list_args(args, server, cookies):
 @needs_login
 def show_args(args, server, cookies):
     endpoint = server + '/rest/job/status'
-    if args.id:
+    if args.all:
+        endpoint += '/all'
+    elif args.id:
         endpoint += '/%d' % args.id
     r = requests.get(endpoint, cookies=cookies)
     if r.status_code == 404:
         print('No job found')
     elif r.status_code == 200:
-        job = r.json()
-        if args.verbose:
-            print('ID:', job['id'])
-            print('Status:', job['status'])
-            if 'score' in job:
-                print('Score:', job['score'])
-            print('Workers:')
-            for worker in job['workers']:
-                print('- Task:', worker['task'])
-                print('  Status:', worker['state'])
-                if 'eta' in worker:
-                    print('  ETA (seconds):', worker['eta'])
-                if 'progress' in worker:
-                    print('  Progress (percent):', worker['progress'] * 100)
-                if 'score' in worker:
-                    print('  Score:', worker['score'])
-                if 'error' in worker:
-                    print('  Error:', worker['error'])
-        else:
-            print('%i: %s' % (job['id'], job['status']))
+        jobs = r.json()
+        if not args.all:
+            jobs = [jobs]
+        for job in jobs:
+            if args.verbose:
+                print('ID:', job['id'])
+                print('Status:', job['status'])
+                if 'score' in job:
+                    print('Score:', job['score'])
+                print('Workers:')
+                for worker in job['workers']:
+                    print('- Task:', worker['task'])
+                    print('  Status:', worker['state'])
+                    if 'eta' in worker:
+                        print('  ETA (seconds):', worker['eta'])
+                    if 'progress' in worker:
+                        print('  Progress (percent):', worker['progress'] * 100)
+                    if 'score' in worker:
+                        print('  Score:', worker['score'])
+                    if 'error' in worker:
+                        print('  Error:', worker['error'])
+            else:
+                print('%i: %s' % (job['id'], job['status']))
     else:
-        print('An error occurred')
+        print('Error %i occurred' % r.status_code)
 
 
 @needs_login
@@ -254,6 +275,9 @@ def init_parsers(subparsers):
     parser_logout = subparsers.add_parser('logout', description='Log out of server')
     parser_logout.set_defaults(func=logout_args)
 
+    parser_leaderboard = subparsers.add_parser('leaderboard', description='Get leaderboard')
+    parser_leaderboard.set_defaults(func=leaderboard_args)
+
     parser_docker = subparsers.add_parser('docker', description='Docker support commands')
     parser_docker.set_defaults(func=lambda args: parser_docker.print_help())
     subparsers_docker = parser_docker.add_subparsers()
@@ -276,6 +300,7 @@ def init_parsers(subparsers):
     parser_job_show.set_defaults(func=show_args)
     parser_job_show.add_argument('id', nargs='?', type=int, help='List a specific job ID')
     parser_job_show.add_argument('-v', '--verbose', action='store_true', help='Be more verbose')
+    parser_job_show.add_argument('-a', '--all', action='store_true', help='Show all jobs')
 
     parser_job_kill = subparsers_job.add_parser('cancel', description='Cancel current job')
     parser_job_kill.set_defaults(func=kill_args)
