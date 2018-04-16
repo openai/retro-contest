@@ -1,12 +1,25 @@
 import gym
+import time
 
 from gym_remote import Bridge
 
 
 class RemoteEnv(gym.Env):
-    def __init__(self, directory):
+    def __init__(self, directory, tries=8):
         self.bridge = Bridge(directory)
-        self.bridge.connect()
+
+        # Try a few times to connect
+        backoff = 2
+        for x in range(tries):
+            try:
+                self.bridge.connect()
+                break
+            except FileNotFoundError:
+                if x + 1 == tries:
+                    raise
+                time.sleep(backoff)
+                backoff *= 2
+
         self.bridge.configure_client()
         self.ch_ac = self.bridge._channels['ac']
         self.ch_ob = self.bridge._channels['ob']
