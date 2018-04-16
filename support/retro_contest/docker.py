@@ -65,12 +65,18 @@ def run(game, state=None, entry=None, **kwargs):
     rand = ''.join(random.sample('abcdefghijklmnopqrstuvwxyz0123456789', 8))
     volname = 'retro-contest-tmp%s' % rand
     datamount = {}
+    agentmount = {}
     if kwargs.get('resultsdir'):
         results = os.path.realpath(kwargs['resultsdir'])
         datamount[convert_path(results)] = {'bind': '/root/compo/results'}
         os.makedirs(results, exist_ok=True)
     else:
         results = None
+
+    if kwargs.get('agentdir'):
+        agentdir = os.path.realpath(kwargs['agentdir'])
+        agentmount[convert_path(agentdir)] = {'bind': '/root/compo/out'}
+        os.makedirs(agentdir, exist_ok=True)
 
     container_kwargs = {'detach': True, 'network_disabled': True}
     remote_kwargs = dict(container_kwargs)
@@ -95,7 +101,8 @@ def run(game, state=None, entry=None, **kwargs):
 
     try:
         agent = client.containers.run(agent_name, agent_command,
-                                      volumes={volname: {'bind': '/root/compo/tmp'}},
+                                      volumes={volname: {'bind': '/root/compo/tmp'},
+                                                **agentmount},
                                       runtime=kwargs.get('runtime', 'nvidia'),
                                       **agent_kwargs)
     except:
@@ -190,6 +197,7 @@ def run_args(args):
         'timestep_limit': args.timestep_limit,
         'discrete_actions': args.discrete_actions,
         'resultsdir': args.results_dir,
+        'agentdir': args.agent_dir,
         'quiet': args.quiet,
         'use_host_data': args.use_host_data,
         'agent_shm': args.agent_shm,
@@ -280,6 +288,7 @@ def init_parser(subparsers):
     parser_run.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
     parser_run.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
     parser_run.add_argument('--results-dir', '-r', type=str, help='Path to output results')
+    parser_run.add_argument('--agent-dir', '-o', type=str, help='Path to mount into agent (mounted at /root/compo/out)')
     parser_run.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
     parser_run.add_argument('--use-host-data', '-d', action='store_true', help='Use the host Gym Retro data directory')
     parser_run.add_argument('--quiet', '-q', action='store_true', help='Disable printing agent logs')

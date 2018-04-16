@@ -25,9 +25,10 @@ RUN . ~/venv/bin/activate && \
     rm -r ~/.cache
 
 RUN echo agent > /root/hostname && \
-    mkdir -p /root/compo/tmp
+    mkdir -p /root/compo/tmp /root/compo/out
 COPY setup/bash_profile /root/.bash_profile
 VOLUME /root/compo/tmp
+VOLUME /root/compo/out
 WORKDIR /root/compo
 ENTRYPOINT ["bash", "-lc", "exec $0 $@"]
 CMD retro-contest-agent
