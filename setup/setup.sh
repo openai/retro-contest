@@ -30,4 +30,4 @@ docker tag openai/retro-agent:tensorflow openai/retro-agent:latest
 docker tag openai/retro-agent agent
 
 echo - Installing Python library
-pip3 install -e '../support[docker]'
+pip3 install -e '../support[docker,rest]'
