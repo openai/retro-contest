@@ -46,6 +46,7 @@ def convert_path(path):
 def run(game, state=None, entry=None, **kwargs):
     client = docker.from_env()
     remote_command = ['retro-contest-remote', 'run', game, *([state] if state else []), '-b', 'results/bk2', '-m', 'results']
+    remote_name = kwargs.get('remote_env', 'openai/retro-env')
     agent_command = []
     agent_name = kwargs.get('agent', 'agent')
     datamount = {}
@@ -91,7 +92,7 @@ def run(game, state=None, entry=None, **kwargs):
         datamount[convert_path(data_path())] = {'bind': '/root/data', 'mode': 'ro'}
 
     try:
-        remote = client.containers.run(kwargs['remote_env'], remote_command,
+        remote = client.containers.run(remote_name, remote_command,
                                        volumes={volname: {'bind': '/root/compo/tmp'},
                                                 **datamount},
                                        **remote_kwargs)
@@ -196,7 +197,6 @@ def run_args(args):
         'wallclock_limit': args.wallclock_limit,
         'timestep_limit': args.timestep_limit,
         'discrete_actions': args.discrete_actions,
-        'remote_env': args.remote_env,
         'resultsdir': args.results_dir,
         'agentdir': args.agent_dir,
         'quiet': args.quiet,
@@ -209,6 +209,9 @@ def run_args(args):
 
     if args.agent:
         kwargs['agent'] = args.agent
+
+    if args.remote_env:
+        kwargs['remote_env'] = args.remote_env
 
     results = run(args.game, args.state, args.entry, **kwargs)
     if results['remote'][0] or results['agent'][0]:
@@ -288,7 +291,7 @@ def init_parser(subparsers):
     parser_run.add_argument('--wallclock-limit', '-W', type=float, default=None, help='Maximum time to run in seconds')
     parser_run.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
     parser_run.add_argument('--no-nv', '-N', action='store_true', help='Disable Nvidia runtime')
-    parser_run.add_argument('--remote-env', '-R', type=str, default='openai/retro-env', help='Remote Docker image')
+    parser_run.add_argument('--remote-env', '-R', type=str, help='Remote Docker image')
     parser_run.add_argument('--results-dir', '-r', type=str, help='Path to output results')
     parser_run.add_argument('--agent-dir', '-o', type=str, help='Path to mount into agent (mounted at /root/compo/out)')
     parser_run.add_argument('--discrete-actions', '-D', action='store_true', help='Use a discrete action space')
