@@ -309,7 +309,8 @@ def init_parser(subparsers):
 
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Run OpenAI Retro Contest support code')
-    init_parser(parser)
+    parser.set_defaults(func=lambda args: parser.print_help())
+    init_parser(parser.add_subparsers())
     args = parser.parse_args(argv)
     if not args.func(args):
         sys.exit(1)
