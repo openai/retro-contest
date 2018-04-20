@@ -5,8 +5,8 @@ import itertools
 import json
 import os
 import requests
-import yaml
 import sys
+import yaml
 from functools import wraps
 from requests.auth import HTTPBasicAuth
 
@@ -337,6 +337,7 @@ def init_parsers(subparsers):
     parser_job_submit = subparsers_job.add_parser('submit', description='Submit new job')
     parser_job_submit.set_defaults(func=submit_args)
     parser_job_submit.add_argument('-t', '--tag', type=str, help='Local tag to push')
+
 
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='Run OpenAI Retro Contest support code')
