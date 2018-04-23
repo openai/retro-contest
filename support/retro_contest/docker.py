@@ -134,18 +134,18 @@ def run(game, state=None, entry=None, **kwargs):
 
         if a_exit is None:
             try:
-                a_exit = agent.wait(timeout=1)
+                a_exit = agent.wait(timeout=10)
             except requests.exceptions.RequestException:
                 agent.kill()
         if r_exit is None:
             try:
-                r_exit = remote.wait(timeout=1)
+                r_exit = remote.wait(timeout=10)
             except requests.exceptions.RequestException:
                 remote.kill()
     except:
         if a_exit is None:
             try:
-                a_exit = agent.wait(timeout=0.2)
+                a_exit = agent.wait(timeout=1)
             except:
                 try:
                     agent.kill()
@@ -153,7 +153,7 @@ def run(game, state=None, entry=None, **kwargs):
                     pass
         if r_exit is None:
             try:
-                r_exit = remote.wait(timeout=0.2)
+                r_exit = remote.wait(timeout=1)
             except:
                 try:
                     remote.kill()
