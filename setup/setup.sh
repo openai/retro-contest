@@ -15,8 +15,10 @@ if [ "$1" = "rebuild" ]; then
 	echo - Building base TensorFlow images
 	docker build -t openai/retro-agent:tensorflow-1.4 --build-arg CUDA=8 --build-arg TF=1.4.1 --cache-from openai/retro-agent:tensorflow-1.4 - < agent-tf.docker
 	docker build -t openai/retro-agent:tensorflow-1.7 --build-arg CUDA=9 --build-arg TF=1.7.0 --cache-from openai/retro-agent:tensorflow-1.7 - < agent-tf.docker
+	docker build -t openai/retro-agent:tensorflow-1.8 --build-arg CUDA=9 --build-arg TF=1.8.0 --cache-from openai/retro-agent:tensorflow-1.8 - < agent-tf.docker
 	echo - Building base PyTorch images
-	docker build -t openai/retro-agent:pytorch --cache-from openai/retro-agent:pytorch - < agent-pytorch.docker
+	docker build -t openai/retro-agent:pytorch-0.3 --build-arg PYTORCH=0.3.1 --cache-from openai/retro-agent:pytorch-0.3 - < agent-pytorch.docker
+	docker build -t openai/retro-agent:pytorch-0.4 --build-arg PYTORCH=0.4.0 --cache-from openai/retro-agent:pytorch-0.4 - < agent-pytorch.docker
 	echo - Building remote image
 	docker build -f remote-env-0.docker -t openai/retro-env --cache-from openai/retro-env ..
 fi
@@ -25,7 +27,8 @@ if [ -n "$(ls ../roms)" ]; then
 	docker build -f remote-env-1.docker -t openai/retro-env ..
 fi
 echo - Tagging images
-docker tag openai/retro-agent:tensorflow-1.7 openai/retro-agent:tensorflow
+docker tag openai/retro-agent:tensorflow-1.8 openai/retro-agent:tensorflow
+docker tag openai/retro-agent:pytorch-0.4 openai/retro-agent:pytorch
 docker tag openai/retro-agent:tensorflow openai/retro-agent:latest
 docker tag openai/retro-agent agent
 
