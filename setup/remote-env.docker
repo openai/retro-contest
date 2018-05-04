@@ -12,11 +12,11 @@ RUN apt-get update && \
     rm -r ~/.cache
 
 # Set up competition-specific layers
-COPY gym-retro /tmp/gym-retro
-copy support /tmp/support
+COPY support /tmp/support
 RUN . ~/venv/bin/activate && \
     pip install gym>=0.9.6 && \
-    pip install /tmp/gym-retro /tmp/support && \
+    pip install git+https://github.com/openai/retro.git@fbb97475859378c2cd7a30670d659744cc2692ea && \
+    pip install /tmp/support && \
     rm -r ~/.cache && \
     echo remote-env > /root/hostname && \
     mkdir -p /root/compo/tmp /root/compo/results /root/roms

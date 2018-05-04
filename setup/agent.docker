@@ -1,16 +1,18 @@
 ARG CUDA
-FROM nvidia/cuda:${CUDA}-runtime-ubuntu16.04
+ARG BASE=nvidia/cuda
+ARG TAG=${CUDA}-runtime-ubuntu
+FROM ${BASE}:${TAG}16.04
 
 ARG CUDA
 ARG CUDNN
 
 # Set up dependency layers
+ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
-RUN echo "deb http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list && \
+RUN ([ -z "$CUDA" ] || echo "deb https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1604/x86_64 /" > /etc/apt/sources.list.d/nvidia-ml.list) && \
     apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        cuda-driver-dev-${CUDA} libcudnn${CUDNN}=${CUDNN}.0.*+cuda${CUDA} \
-        python3-venv build-essential git && \
+    apt-get install -y --no-install-recommends python3-venv build-essential git && \
+    ([ -z "$CUDA" ] || apt-get install -y --no-install-recommends cuda-driver-dev-${CUDA} libcudnn${CUDNN}=${CUDNN}.0.*+cuda${CUDA}) && \
     apt-get clean && \
     python3 -m venv ~/venv && \
     . ~/venv/bin/activate && \

@@ -1,35 +1,41 @@
 #!/bin/sh
 
 cd `dirname $0`
-if [ -d ../.git ]; then
-    git submodule update --init --recursive
-fi
+
+try_build () {
+	docker build -t $@ || exit $?
+}
 
 echo - Pulling base images
 docker pull -a openai/retro-agent
 docker pull -a openai/retro-env
 if [ "$1" = "rebuild" ]; then
+	echo - Building base CPU image
+	try_build openai/retro-agent:bare           --build-arg BASE=ubuntu --build-arg TAG= --pull -f agent.docker ..
 	echo - Building base CUDA images
-	docker build --pull -f agent.docker -t openai/retro-agent:bare-cuda8 --build-arg CUDA=8.0 --build-arg CUDNN=6 --cache-from openai/retro-agent:bare-cuda8 ..
-	docker build --pull -f agent.docker -t openai/retro-agent:bare-cuda9 --build-arg CUDA=9.0 --build-arg CUDNN=7 --cache-from openai/retro-agent:bare-cuda9 ..
+	try_build openai/retro-agent:bare-cuda8     --build-arg CUDA=8.0 --build-arg CUDNN=6 --pull -f agent.docker ..
+	try_build openai/retro-agent:bare-cuda9     --build-arg CUDA=9.0 --build-arg CUDNN=7 --pull -f agent.docker ..
 	echo - Building base TensorFlow images
-	docker build -t openai/retro-agent:tensorflow-1.4 --build-arg CUDA=8 --build-arg TF=1.4.1 --cache-from openai/retro-agent:tensorflow-1.4 - < agent-tf.docker
-	docker build -t openai/retro-agent:tensorflow-1.7 --build-arg CUDA=9 --build-arg TF=1.7.0 --cache-from openai/retro-agent:tensorflow-1.7 - < agent-tf.docker
-	docker build -t openai/retro-agent:tensorflow-1.8 --build-arg CUDA=9 --build-arg TF=1.8.0 --cache-from openai/retro-agent:tensorflow-1.8 - < agent-tf.docker
+	try_build openai/retro-agent:tensorflow-1.4 --build-arg CUDA=8 --build-arg TF=1.4.1        - < agent-tf.docker
+	try_build openai/retro-agent:tensorflow-1.5 --build-arg CUDA=9 --build-arg TF=1.5.0        - < agent-tf.docker
+	try_build openai/retro-agent:tensorflow-1.7 --build-arg CUDA=9 --build-arg TF=1.7.0        - < agent-tf.docker
+	try_build openai/retro-agent:tensorflow-1.8 --build-arg CUDA=9 --build-arg TF=1.8.0        - < agent-tf.docker
 	echo - Building base PyTorch images
-	docker build -t openai/retro-agent:pytorch-0.3 --build-arg PYTORCH=0.3.1 --cache-from openai/retro-agent:pytorch-0.3 - < agent-pytorch.docker
-	docker build -t openai/retro-agent:pytorch-0.4 --build-arg PYTORCH=0.4.0 --cache-from openai/retro-agent:pytorch-0.4 - < agent-pytorch.docker
+	try_build openai/retro-agent:pytorch-0.3    --build-arg PYTORCH=0.3.1                      - < agent-pytorch.docker
+	try_build openai/retro-agent:pytorch-0.4    --build-arg PYTORCH=0.4.0                      - < agent-pytorch.docker
 	echo - Building remote image
-	docker build -f remote-env-0.docker -t openai/retro-env --cache-from openai/retro-env ..
+	try_build openai/retro-env -f remote-env.docker ..
 fi
 if [ -n "$(ls ../roms)" ]; then
 	echo - Building remote image with ROMs
-	docker build -f remote-env-1.docker -t openai/retro-env ..
+	docker tag openai/retro-env openai/retro-env:bare
+	try_build openai/retro-env -f remote-env-roms.docker ..
 fi
 echo - Tagging images
-docker tag openai/retro-agent:tensorflow-1.8 openai/retro-agent:tensorflow
-docker tag openai/retro-agent:pytorch-0.4 openai/retro-agent:pytorch
-docker tag openai/retro-agent:tensorflow openai/retro-agent:latest
+docker tag openai/retro-agent:tensorflow-1.8     openai/retro-agent:tensorflow-latest
+docker tag openai/retro-agent:tensorflow-latest  openai/retro-agent:tensorflow
+docker tag openai/retro-agent:pytorch-0.4        openai/retro-agent:pytorch
+docker tag openai/retro-agent:tensorflow         openai/retro-agent:latest
 docker tag openai/retro-agent agent
 
 echo - Installing Python library

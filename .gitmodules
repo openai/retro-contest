@@ -1,3 +1,0 @@
-[submodule "gym-retro"]
-	path = gym-retro
-	url = https://github.com/openai/retro.git
