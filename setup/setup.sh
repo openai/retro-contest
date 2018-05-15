@@ -17,8 +17,8 @@ if [ "$1" = "rebuild" ]; then
 	try_build openai/retro-agent:bare-cuda9     --build-arg CUDA=9.0 --build-arg CUDNN=7 --pull -f agent.docker ..
 	echo - Building base TensorFlow images
 	try_build openai/retro-agent:tensorflow-1.4 --build-arg CUDA=8 --build-arg TF=1.4.1        - < agent-tf.docker
-	try_build openai/retro-agent:tensorflow-1.5 --build-arg CUDA=9 --build-arg TF=1.5.0        - < agent-tf.docker
-	try_build openai/retro-agent:tensorflow-1.7 --build-arg CUDA=9 --build-arg TF=1.7.0        - < agent-tf.docker
+	try_build openai/retro-agent:tensorflow-1.5 --build-arg CUDA=9 --build-arg TF=1.5.1        - < agent-tf.docker
+	try_build openai/retro-agent:tensorflow-1.7 --build-arg CUDA=9 --build-arg TF=1.7.1        - < agent-tf.docker
 	try_build openai/retro-agent:tensorflow-1.8 --build-arg CUDA=9 --build-arg TF=1.8.0        - < agent-tf.docker
 	echo - Building base PyTorch images
 	try_build openai/retro-agent:pytorch-0.3    --build-arg PYTORCH=0.3.1                      - < agent-pytorch.docker
