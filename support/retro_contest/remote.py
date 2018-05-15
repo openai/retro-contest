@@ -8,7 +8,7 @@ import retro_contest.local
 import sys
 
 
-def make(game, state=retro.STATE_DEFAULT, bk2dir=None, monitordir=None, discrete_actions=False, socketdir='tmp/sock'):
+def make(game, state=retro.STATE_DEFAULT, bk2dir=None, monitordir=None, discrete_actions=False, socketdir=None):
     if bk2dir:
         os.makedirs(bk2dir, exist_ok=True)
     env = retro_contest.local.make(game, state, discrete_actions=discrete_actions, bk2dir=bk2dir)
@@ -20,7 +20,7 @@ def make(game, state=retro.STATE_DEFAULT, bk2dir=None, monitordir=None, discrete
 
 def run(game, state,
         wallclock_limit=None, timestep_limit=None,
-        monitordir=None, bk2dir=None, socketdir='tmp/sock',
+        monitordir=None, bk2dir=None, socketdir=None,
         discrete_actions=False, daemonize=False):
     if daemonize:
         pid = os.fork()
@@ -37,6 +37,7 @@ def run_args(args):
         timestep_limit=args.timestep_limit,
         bk2dir=args.bk2dir,
         monitordir=args.monitordir,
+        socketdir=args.socketdir,
         discrete_actions=args.discrete_actions,
         daemonize=args.daemonize)
 
@@ -77,6 +78,7 @@ def main(argv=sys.argv[1:]):
     parser_run.add_argument('state', type=str, default=retro.STATE_DEFAULT, nargs='?', help='Name of initial state')
     parser_run.add_argument('--monitordir', '-m', type=str, help='Directory to hold monitor files')
     parser_run.add_argument('--bk2dir', '-b', type=str, help='Directory to hold BK2 movies')
+    parser_run.add_argument('--socketdir', '-s', type=str, default='tmp/sock', help='Directory to hold sockets')
     parser_run.add_argument('--daemonize', '-d', action='store_true', default=False, help='Daemonize (background) the process')
     parser_run.add_argument('--wallclock-limit', '-W', type=float, default=None, help='Maximum time to run in seconds')
     parser_run.add_argument('--timestep-limit', '-T', type=int, default=None, help='Maximum time to run in timesteps')
