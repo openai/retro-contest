@@ -8,7 +8,7 @@ import retro_contest.local
 import sys
 
 
-def make(game, state, bk2dir=None, monitordir=None, discrete_actions=False, socketdir=None):
+def make(game, state=retro.STATE_DEFAULT, bk2dir=None, monitordir=None, discrete_actions=False, socketdir=None):
     if bk2dir:
         os.makedirs(bk2dir, exist_ok=True)
     env = retro_contest.local.make(game, state, discrete_actions=discrete_actions, bk2dir=bk2dir)
