@@ -3,5 +3,5 @@ FROM openai/retro-env
 # Set up ROMs
 COPY roms /root/roms
 RUN . ~/venv/bin/activate && \
-    python /tmp/gym-retro/scripts/import.py /root/roms && \
+    python -m retro.import /root/roms && \
     rm -r /root/roms
