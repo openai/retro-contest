@@ -34,7 +34,7 @@ setup(
         'gym',
     ],
     extras_require={
-        'retro': 'gym-retro',
+        'retro': 'gym-retro>=0.6.0',
         'docker': 'docker',
         'rest': ['docker', 'pyyaml', 'requests'],
     },

@@ -3,10 +3,10 @@ import retro_contest
 import gym
 
 
-def make(game, state=retro.STATE_DEFAULT, discrete_actions=False, bk2dir=None):
-    use_restricted_actions = retro.ACTIONS_FILTERED
+def make(game, state=retro.State.DEFAULT, discrete_actions=False, bk2dir=None):
+    use_restricted_actions = retro.Actions.FILTERED
     if discrete_actions:
-        use_restricted_actions = retro.ACTIONS_DISCRETE
+        use_restricted_actions = retro.Actions.DISCRETE
     try:
         env = retro.make(game, state, scenario='contest', use_restricted_actions=use_restricted_actions)
     except Exception:
