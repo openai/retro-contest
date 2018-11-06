@@ -1,6 +1,7 @@
 import retro
 import retro_contest
 import gym
+import gym.wrappers
 
 
 def make(game, state=retro.State.DEFAULT, discrete_actions=False, bk2dir=None):
